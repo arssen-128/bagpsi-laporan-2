@@ -28,29 +28,29 @@ function personKey(p){
  if(id)return `id:${String(id)}`;
  return `name:${String(p?.pangkat||"").trim().toUpperCase()}|${String(p?.nama||"").trim().replace(/\s+/g," ").toUpperCase()}`;
 }
-function isPersonAlreadySelected(person){
+function isPersonAlreadySelected(card,person){
  const key=personKey(person);
- return [...activities.querySelectorAll(".selected-person")].some(row=>personKey({id:row.dataset.id,pangkat:row.dataset.rank,nama:row.dataset.name})===key);
+ // Duplikasi hanya dilarang di dalam kegiatan yang sama.
+ // Personel yang sama tetap boleh bertugas pada kegiatan lain dalam laporan.
+ return [...card.querySelectorAll(".selected-person")].some(row=>personKey({id:row.dataset.id,pangkat:row.dataset.rank,nama:row.dataset.name})===key);
 }
 function renderPersonnelResults(card,query=""){
  const wrap=card.querySelector(".personnel-combobox"),list=wrap?.querySelector(".personnel-results");if(!list)return;
  const q=query.trim().toLocaleLowerCase("id-ID");
- const results=masterPeople.filter(p=>p.status==="aktif"&&[p.nama,p.nrp,p.pangkat,p.jabatan,p.bagian].some(v=>String(v||"").toLocaleLowerCase("id-ID").includes(q)))
+ const results=masterPeople.filter(p=>p.status==="aktif"&&!isPersonAlreadySelected(card,p)&&[p.nama,p.nrp,p.pangkat,p.jabatan,p.bagian].some(v=>String(v||"").toLocaleLowerCase("id-ID").includes(q)))
   .sort((a,b)=>rankScore(b.pangkat)-rankScore(a.pangkat)||String(a.nama).localeCompare(String(b.nama),"id"));
  list.replaceChildren();
- if(!results.length){const empty=document.createElement("div");empty.className="personnel-empty";empty.textContent="Personel tidak ditemukan";list.append(empty);return;}
+ if(!results.length){const empty=document.createElement("div");empty.className="personnel-empty";empty.textContent=q?"Personel tidak ditemukan atau sudah ditambahkan pada kegiatan ini.":"Semua personel yang tersedia sudah dipilih pada kegiatan ini.";list.append(empty);return;}
  results.forEach(p=>{
-  const alreadySelected=isPersonAlreadySelected(p);
-  const option=document.createElement("button");option.type="button";option.className="personnel-option";option.setAttribute("role","option");option.dataset.personId=p.id;option.disabled=alreadySelected;
-  if(alreadySelected)option.classList.add("is-already-selected");
+  const option=document.createElement("button");option.type="button";option.className="personnel-option";option.setAttribute("role","option");option.dataset.personId=p.id;
   const initials=String(p.nama||"?").trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();
   const avatar=document.createElement("span");avatar.className="personnel-avatar";avatar.textContent=initials;
   const info=document.createElement("span");info.className="personnel-option-info";
   const name=document.createElement("strong");name.textContent=`${p.pangkat||""} ${p.nama||""}`.trim();
   const meta=document.createElement("small");meta.textContent=[p.nrp?`NRP ${p.nrp}`:"",p.jabatan,p.bagian].filter(Boolean).join(" · ")||"Personel aktif";
-  info.append(name,meta);const plus=document.createElement("span");plus.className="personnel-option-add";plus.textContent=alreadySelected?"✓ Sudah dipilih":"＋";option.append(avatar,info,plus);
+  info.append(name,meta);const plus=document.createElement("span");plus.className="personnel-option-add";plus.textContent="＋";option.append(avatar,info,plus);
   option.addEventListener("click",()=>{
-   if(isPersonAlreadySelected(p)){notify("Personel ini sudah ditambahkan dalam laporan.",true);renderPersonnelResults(card,wrap.querySelector(".personnel-search").value);return;}
+   if(isPersonAlreadySelected(card,p)){renderPersonnelResults(card,wrap.querySelector(".personnel-search").value);return;}
    const select=card.querySelector(".master-person-select");select.value=String(p.id);select.dispatchEvent(new Event("change",{bubbles:true}));
    const search=wrap.querySelector(".personnel-search");search.value=`${p.pangkat||""} ${p.nama||""}`.trim();wrap.classList.remove("is-open");search.setAttribute("aria-expanded","false");
   });list.append(option);
@@ -63,15 +63,15 @@ function fillPersonOptions(card){
 }
 function addSelectedPerson(card,p){
  if(!p?.pangkat||!p?.nama)return false;
- if(isPersonAlreadySelected(p))return false;
+ if(isPersonAlreadySelected(card,p)){notify("Personel ini sudah ditambahkan pada kegiatan ini.",true);return false;}
  const row=document.createElement("div");row.className="selected-person";
  Object.assign(row.dataset,{rank:p.pangkat,name:p.nama,degree:p.gelar||"",position:p.jabatan||"",id:p.personel_id||p.id||""});
  const detail=document.createElement("span");detail.className="selected-person-detail";
  const title=document.createElement("b");title.textContent=`${p.pangkat} ${p.nama}`;
  const sub=document.createElement("small");sub.textContent=[p.gelar,p.jabatan].filter(Boolean).join(" · ");detail.append(title,sub);
- const del=document.createElement("button");del.type="button";del.className="selected-person-remove";del.textContent="Hapus";del.addEventListener("click",()=>{row.remove();sortSelectedPeople(card);activities.querySelectorAll(".activity-card").forEach(c=>{const input=c.querySelector(".personnel-search");if(input)renderPersonnelResults(c,input.value);});renderPreview();scheduleSave()});
+ const del=document.createElement("button");del.type="button";del.className="selected-person-remove";del.textContent="Hapus";del.addEventListener("click",()=>{row.remove();sortSelectedPeople(card);const input=card.querySelector(".personnel-search");if(input)renderPersonnelResults(card,input.value);renderPreview();scheduleSave()});
  row.append(detail,del);card.querySelector(".selected-people").append(row);sortSelectedPeople(card);
- activities.querySelectorAll(".activity-card").forEach(c=>{const input=c.querySelector(".personnel-search");if(input)renderPersonnelResults(c,input.value);});
+ const input=card.querySelector(".personnel-search");if(input)renderPersonnelResults(card,input.value);
  return true;
 }
 function sortSelectedPeople(card){

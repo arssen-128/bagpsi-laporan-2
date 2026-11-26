@@ -1,28 +1,27 @@
-BAGPSI REPORT - SMART PERSONNEL PICKER UPDATE
+BAGPSI REPORT — PERSONNEL PICKER DUPLICATE RULE FIX
 
-File yang diperbarui:
+PERUBAHAN LOGIKA:
+1. Personel yang sudah dipilih pada satu kegiatan disembunyikan dari hasil dropdown kegiatan yang sama.
+2. Personel yang sama tetap tersedia dan boleh dipilih pada kegiatan lain dalam laporan yang sama.
+3. Validasi duplikasi dilakukan kembali ketika tombol Tambah Pelaksana ditekan, sehingga duplikasi dalam satu kegiatan tetap ditolak meskipun input dilakukan melalui jalur lain.
+4. Jika personel dihapus dari daftar pelaksana suatu kegiatan, personel tersebut kembali muncul pada dropdown kegiatan itu.
+5. Pengurutan pangkat tertinggi dan aksen gold untuk personel teratas tetap dipertahankan.
+
+FILE YANG DIGANTI:
 - pages/buat-laporan.html
 - js/pages/report-editor.js
 - css/app.css
 
-Cara memasang:
-1. Ekstrak ZIP.
-2. Upload isi folder pages/, js/, dan css/ ke root repository bagpsi-laporan-2.
-3. Replace file pada path yang sama persis.
-4. Commit ke branch main.
-5. Tunggu GitHub Pages selesai deploy, lalu hard refresh (Ctrl+Shift+R).
+CARA PEMASANGAN:
+Ekstrak ZIP. Upload/replace ketiga file di atas ke path yang sama pada root repository GitHub. Jangan upload folder pembungkus BAGPSI-DRAFT-ACCESS-CONTROL sebagai subfolder baru. Commit ke branch yang digunakan GitHub Pages, lalu hard refresh halaman.
 
-Perubahan:
-- Dropdown native diganti searchable dropdown bergaya kartu.
-- Pencarian menggunakan nama, NRP, pangkat, jabatan, dan bagian.
-- Memilih personel tetap mengisi pangkat, nama, gelar, dan jabatan secara otomatis.
-- Setelah menambahkan personel, picker di-reset dan tetap dapat digunakan untuk memilih personel berikutnya.
-- Personel yang sama tidak disembunyikan/dinonaktifkan setelah dipilih; pemilihan ulang tetap dimungkinkan.
-- Daftar pelaksana diurutkan berdasarkan hierarki pangkat yang dikenali aplikasi.
-- Personel dengan pangkat tertinggi dalam daftar ditandai dengan aksen gold tanpa label penjelasan.
-- Penghapusan personel dari daftar tetap tersedia.
+TIDAK ADA MIGRASI DATABASE.
 
-Catatan:
-- Pembaruan ini hanya menyentuh UI picker, pengurutan daftar pelaksana, dan styling.
-- Tidak mengubah schema database, tabel Master Personel, RLS, alur Draft/Final, maupun mekanisme penyimpanan laporan.
-- Uji sintaks JavaScript dilakukan dengan node --check. Belum dilakukan pengujian browser live pada akun Supabase.
+PENGUJIAN YANG PERLU DILAKUKAN SETELAH DEPLOY:
+A. Kegiatan 1: pilih Personel A. Pastikan Personel A hilang dari dropdown Kegiatan 1.
+B. Kegiatan 2: cari Personel A. Pastikan Personel A masih tersedia dan dapat dipilih.
+C. Kegiatan 1: hapus Personel A. Pastikan Personel A muncul kembali di dropdown Kegiatan 1.
+D. Coba menambahkan Personel A dua kali pada Kegiatan 1 melalui jalur input apa pun. Penambahan kedua harus ditolak.
+
+Pemeriksaan yang telah dilakukan: node --check pada js/pages/report-editor.js.
+Belum dilakukan: pengujian browser live dan transaksi Supabase pada project pengguna.
