@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#102b4c"><title>Buat Laporan — BAGPSI REPORT</title>
+<link rel="icon" href="../assets/PSI.png" type="image/svg+xml">
+<link rel="stylesheet" href="../css/base.css"><link rel="stylesheet" href="../css/app.css">
+<script type="module" src="../js/pages/report-editor.js"></script></head>
+<body class="app-page">
+<div class="app-frame">
+  <aside class="sidebar" id="sidebar">
+    <a class="brand" href="./dashboard.html"><img src="../assets/PSI.png" alt=""><span><b>BAGPSI REPORT</b><small>RO SDM POLDA BANTEN</small></span></a>
+    <p class="nav-caption">MENU UTAMA</p><nav class="nav-list"><a class="nav-link " href="./dashboard.html"><span>▦</span>Dashboard</a><a class="nav-link active" href="./buat-laporan.html"><span>▤</span>Buat laporan</a><a class="nav-link " href="./laporan-tersimpan.html"><span>▣</span>Laporan tersimpan</a><a class="nav-link " href="./pratinjau.html"><span>≡</span>Pratinjau teks</a><a class="nav-link " href="./master-personel.html"><span>♟</span>Master personel</a></nav>
+    <div class="sidebar-foot"><i></i> Terhubung ke BAGPSI REPORT</div>
+  </aside>
+  <div class="app-main">
+    <header class="topbar">
+      <button class="menu-toggle" id="menu-toggle" aria-label="Buka menu" aria-expanded="false">☰</button>
+      <div class="account"><small>AKUN AKTIF</small><strong id="account-email">Memeriksa sesi…</strong><span id="sync-status">Menghubungkan…</span></div>
+      <div class="top-actions"><a class="btn primary-soft" href="./buat-laporan.html">＋ Laporan baru</a><button class="btn quiet" id="logout-button" type="button">Keluar</button></div>
+    </header>
+    <main class="page-content">
+      <header class="page-title"><div><p class="eyebrow">BAGPSI RO SDM POLDA BANTEN</p><h1>Buat Laporan</h1><p class="muted">Isi informasi kegiatan. Perubahan dapat disimpan ke database.</p></div></header>
+      
+<div class="editor-layout">
+<section class="editor-main">
+  <form id="report-form">
+    <section class="panel">
+      <div class="panel-head"><div><span class="kicker">IDENTITAS LAPORAN</span><h2>Informasi umum</h2></div></div>
+      <div class="form-grid">
+        <div class="field"><label for="jenis">Jenis template</label><select id="jenis"><option value="karo_sdm">KARO SDM</option><option value="karopsi">KAROPSI</option></select></div>
+        <div class="field"><label for="penerima">Kepada</label><input id="penerima" required value="Yth. KARO SDM POLDA BANTEN"></div>
+        <div class="field span-2"><label for="pembuka">Salam / pembuka (opsional)</label><textarea id="pembuka" rows="3">Dengan hormat,
+Bersama ini disampaikan laporan kegiatan sebagai berikut.</textarea></div>
+        <div class="field span-2"><label for="penutup">Penutup</label><textarea id="penutup" rows="2">Demikian disampaikan, atas perhatiannya diucapkan terima kasih.</textarea></div>
+      </div>
+    </section>
+    <div id="activities"></div>
+    <div class="button-row"><button class="btn outline" type="button" id="add-activity">＋ Tambah kegiatan</button><span class="muted small">KARO SDM dibatasi satu kegiatan; KAROPSI dapat memuat beberapa kegiatan.</span></div>
+    <section class="panel save-panel"><div><b id="editor-mode">Laporan baru</b><p class="muted small" id="draft-status">Draf tersimpan sementara di perangkat ini.</p></div><div class="button-row"><button class="btn outline" type="button" id="new-report">Kosongkan</button><button class="btn primary" type="button" id="save-report">Simpan online</button></div></section>
+  </form>
+</section>
+<aside class="preview-side"><div class="panel preview-sticky"><div class="panel-head"><div><span class="kicker">LIVE PREVIEW</span><h2>Teks laporan</h2></div><a href="./pratinjau.html">Buka penuh ↗</a></div><pre id="live-preview"></pre><button class="btn outline full" id="copy-preview" type="button">Salin teks</button></div></aside>
+</div>
+<template id="activity-template">
+<article class="panel activity-card">
+ <div class="panel-head"><div><span class="kicker">RINCIAN KEGIATAN</span><h2 class="activity-number">Kegiatan</h2></div><button type="button" class="text-button remove-activity">Hapus</button></div>
+ <div class="form-grid">
+  <div class="field span-2"><label>Nama kegiatan</label><input class="activity-name" placeholder="Nama atau judul kegiatan"></div>
+  <div class="field"><label>Tanggal</label><input class="activity-date" type="date"></div>
+  <div class="field"><label>Hari</label><input class="activity-day" readonly placeholder="Otomatis"></div>
+  <div class="field"><label>Jam mulai</label><input class="activity-start" type="time"></div>
+  <div class="field"><label>Jam selesai</label><input class="activity-end" type="time"><label class="check-line"><input class="activity-until" type="checkbox"> Hingga selesai</label></div>
+  <div class="field span-2"><label>Tempat / lokasi</label><input class="activity-location" placeholder="Tempat pelaksanaan"></div>
+  <div class="field span-2"><label>Uraian kegiatan</label><textarea class="activity-description" rows="4"></textarea></div>
+  <div class="field span-2"><label>Hasil kegiatan</label><textarea class="activity-result" rows="3"></textarea></div>
+ </div>
+ <div class="personnel-picker">
+  <div class="field"><label>Pilih personel dari master</label><select class="master-person-select"><option value="">Memuat personel…</option></select></div>
+  <div class="form-grid personnel-inputs">
+   <div class="field"><label>Pangkat</label><select class="person-rank"><option value="">Pilih pangkat</option><option>JENDERAL</option><option>KOMJEN</option><option>IRJEN</option><option>BRIGJEN</option><option>KOMBES</option><option>KOMBES POL.</option><option>AKBP</option><option>KOMPOL</option><option>AKP</option><option>IPTU</option><option>IPDA</option><option>AIPTU</option><option>AIPDA</option><option>BRIPKA</option><option>BRIGPOL</option><option>BRIPTU</option><option>BRIPDA</option></select></div>
+   <div class="field"><label>Nama</label><input class="person-name" readonly></div>
+   <div class="field"><label>Gelar</label><input class="person-degree" readonly></div>
+   <div class="field"><label>Jabatan</label><input class="person-position" readonly></div>
+  </div>
+  <button class="btn outline add-person" type="button">＋ Tambah pelaksana</button>
+  <div class="selected-people"></div>
+ </div>
+</article>
+</template>
+
+    </main>
+  </div>
+</div>
+<div class="mobile-backdrop" id="mobile-backdrop"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body></html>
