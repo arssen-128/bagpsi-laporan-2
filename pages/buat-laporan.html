@@ -1,13 +1,14 @@
 <!doctype html>
 <html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#102b4c"><title>Buat Laporan — BAGPSI REPORT</title>
-<link rel="icon" href="../assets/logo-placeholder.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../css/base.css"><link rel="stylesheet" href="../css/app.css">
+<link rel="icon" href="../assets/PSI.png" type="image/png">
+<link rel="stylesheet" href="../css/base.css"><link rel="stylesheet" href="../css/app.css"><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module" src="../js/pages/report-editor.js"></script></head>
 <body class="app-page">
 <div class="app-frame">
   <aside class="sidebar" id="sidebar">
-    <a class="brand" href="./dashboard.html"><img src="../assets/logo-placeholder.svg" alt=""><span><b>BAGPSI REPORT</b><small>RO SDM POLDA BANTEN</small></span></a>
+    <a class="brand" href="./dashboard.html"><img src="../assets/PSI.png" alt=""><span><b>BAGPSI REPORT</b><small>RO SDM POLDA BANTEN</small></span></a>
     <p class="nav-caption">MENU UTAMA</p><nav class="nav-list"><a class="nav-link " href="./dashboard.html"><span>▦</span>Dashboard</a><a class="nav-link active" href="./buat-laporan.html"><span>▤</span>Buat laporan</a><a class="nav-link " href="./laporan-tersimpan.html"><span>▣</span>Laporan tersimpan</a><a class="nav-link " href="./pratinjau.html"><span>≡</span>Pratinjau teks</a><a class="nav-link " href="./master-personel.html"><span>♟</span>Master personel</a></nav>
     <div class="sidebar-foot"><i></i> Terhubung ke BAGPSI REPORT</div>
   </aside>
@@ -49,7 +50,16 @@ Bersama ini disampaikan laporan kegiatan sebagai berikut.</textarea></div>
   <div class="field"><label>Hari</label><input class="activity-day" readonly placeholder="Otomatis"></div>
   <div class="field"><label>Jam mulai</label><input class="activity-start" type="time"></div>
   <div class="field"><label>Jam selesai</label><input class="activity-end" type="time"><label class="check-line"><input class="activity-until" type="checkbox"> Hingga selesai</label></div>
-  <div class="field span-2"><label>Tempat / lokasi</label><input class="activity-location" placeholder="Tempat pelaksanaan"></div>
+  <div class="field span-2 location-field">
+   <label>Tempat / lokasi</label>
+   <input class="activity-location" placeholder="Alamat lokasi akan tampil di sini" autocomplete="street-address">
+   <div class="location-actions">
+    <button class="btn outline location-current" type="button">◎ Lokasi saya sekarang</button>
+    <button class="btn outline location-map" type="button">▧ Pilih di peta</button>
+    <button class="btn outline location-manual" type="button">✎ Isi manual</button>
+   </div>
+   <small class="muted location-hint">Pilih lokasi melalui GPS, peta, atau isi alamat secara manual.</small>
+  </div>
   <div class="field span-2"><label>Uraian kegiatan</label><textarea class="activity-description" rows="4"></textarea></div>
   <div class="field span-2"><label>Hasil kegiatan</label><textarea class="activity-result" rows="3"></textarea></div>
  </div>
@@ -72,4 +82,22 @@ Bersama ini disampaikan laporan kegiatan sebagai berikut.</textarea></div>
 </div>
 <div class="mobile-backdrop" id="mobile-backdrop"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<div class="location-modal" id="location-modal" aria-hidden="true">
+ <div class="location-dialog" role="dialog" aria-modal="true" aria-labelledby="location-modal-title">
+  <div class="location-dialog-head"><div><span class="kicker">LOKASI KEGIATAN</span><h2 id="location-modal-title">Pilih lokasi di peta</h2></div><button type="button" class="icon-button" id="location-close" aria-label="Tutup">×</button></div>
+  <div class="location-search-row"><input id="map-search" placeholder="Cari nama tempat atau alamat (opsional)" autocomplete="off"><button class="btn outline" id="map-search-button" type="button">Cari</button></div>
+  <div class="map-stage"><div id="location-map" aria-label="Peta untuk menentukan titik lokasi"></div><div class="map-crosshair" aria-hidden="true"><span>●</span></div></div>
+  <div class="map-bottom"><div><b id="map-address">Geser peta hingga titik berada di lokasi kegiatan.</b><small id="map-coordinates">Koordinat akan ditampilkan di sini.</small></div><div class="button-row"><button class="btn outline" id="location-cancel" type="button">Batal</button><button class="btn primary" id="location-confirm" type="button">✓ OK, Gunakan Lokasi</button></div></div>
+  <p class="map-attribution-note">Peta © OpenStreetMap contributors. Hasil alamat diperoleh melalui layanan geocoding OpenStreetMap.</p>
+ </div>
+</div>
+<div class="location-modal" id="manual-location-modal" aria-hidden="true">
+ <div class="location-dialog manual-dialog" role="dialog" aria-modal="true" aria-labelledby="manual-location-title">
+  <div class="location-dialog-head"><div><span class="kicker">INPUT LOKASI</span><h2 id="manual-location-title">Isi lokasi secara manual</h2></div><button type="button" class="icon-button" id="manual-close" aria-label="Tutup">×</button></div>
+  <div class="form-grid"><div class="field"><label for="manual-place">Nama tempat (opsional)</label><input id="manual-place" placeholder="Contoh: Aula Polda Banten"></div><div class="field span-2"><label for="manual-address">Alamat lengkap</label><textarea id="manual-address" rows="3" placeholder="Masukkan alamat lokasi kegiatan" required></textarea></div></div>
+  <div class="button-row modal-actions"><button class="btn outline" id="manual-cancel" type="button">Batal</button><button class="btn primary" id="manual-save" type="button">✓ Simpan Lokasi</button></div>
+ </div>
+</div>
+
 </body></html>
