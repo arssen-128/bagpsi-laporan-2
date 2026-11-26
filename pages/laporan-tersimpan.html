@@ -6,34 +6,26 @@
 <script type="module" src="../js/pages/archive.js"></script></head>
 <body class="app-page">
 <div class="app-frame">
-  <aside class="sidebar" id="sidebar">
-    <a class="brand" href="./dashboard.html"><img src="../assets/logo-placeholder.svg" alt=""><span><b>BAGPSI REPORT</b><small>RO SDM POLDA BANTEN</small></span></a>
-    <p class="nav-caption">MENU UTAMA</p><nav class="nav-list"><a class="nav-link " href="./dashboard.html"><span>▦</span>Dashboard</a><a class="nav-link " href="./buat-laporan.html"><span>▤</span>Buat laporan</a><a class="nav-link active" href="./laporan-tersimpan.html"><span>▣</span>Laporan tersimpan</a><a class="nav-link " href="./pratinjau.html"><span>≡</span>Pratinjau teks</a><a class="nav-link " href="./master-personel.html"><span>♟</span>Master personel</a></nav>
-    <div class="sidebar-foot"><i></i> Terhubung ke BAGPSI REPORT</div>
-  </aside>
-  <div class="app-main">
-    <header class="topbar">
-      <button class="menu-toggle" id="menu-toggle" aria-label="Buka menu" aria-expanded="false">☰</button>
-      <div class="account"><small>AKUN AKTIF</small><strong id="account-email">Memeriksa sesi…</strong><span id="sync-status">Menghubungkan…</span></div>
-      <div class="top-actions"><a class="btn primary-soft" href="./buat-laporan.html">＋ Laporan baru</a><button class="btn quiet" id="logout-button" type="button">Keluar</button></div>
-    </header>
-    <main class="page-content">
-      <header class="page-title"><div><p class="eyebrow">BAGPSI RO SDM POLDA BANTEN</p><h1>Laporan Tersimpan</h1><p class="muted">Arsip online BAGPSI RO SDM POLDA BANTEN.</p></div></header>
-      
+<aside class="sidebar" id="sidebar">
+<a class="brand" href="./dashboard.html"><img src="../assets/logo-placeholder.svg" alt=""><span><b>BAGPSI REPORT</b><small>RO SDM POLDA BANTEN</small></span></a>
+<p class="nav-caption">MENU UTAMA</p><nav class="nav-list"><a class="nav-link " href="./dashboard.html"><span>▦</span>Dashboard</a><a class="nav-link " href="./buat-laporan.html"><span>▤</span>Buat laporan</a><a class="nav-link active" href="./laporan-tersimpan.html"><span>▣</span>Laporan tersimpan</a><a class="nav-link " href="./pratinjau.html"><span>≡</span>Pratinjau teks</a><a class="nav-link " href="./master-personel.html"><span>♟</span>Master personel</a></nav>
+<div class="sidebar-foot"><i></i> Terhubung ke BAGPSI REPORT</div>
+</aside>
+<div class="app-main">
+<header class="topbar"><button class="menu-toggle" id="menu-toggle" aria-label="Buka menu" aria-expanded="false">☰</button><div class="account"><small>AKUN AKTIF</small><strong id="account-email">Memeriksa sesi…</strong><span id="sync-status">Menghubungkan…</span></div><div class="top-actions"><a class="btn primary-soft" href="./buat-laporan.html">＋ Laporan baru</a><button class="btn quiet" id="logout-button" type="button">Keluar</button></div></header>
+<main class="page-content">
+<header class="page-title"><div><p class="eyebrow">BAGPSI RO SDM POLDA BANTEN</p><h1>Laporan Tersimpan</h1><p class="muted">Arsip online BAGPSI RO SDM POLDA BANTEN.</p></div></header>
 <section class="archive-tools">
- <label class="search-field"><span>⌕</span><input id="archive-search" type="search" placeholder="Cari judul, penerima, isi kegiatan…"></label>
- <select id="archive-template"><option value="all">Semua Template</option><option value="karo_sdm">KARO SDM</option><option value="karopsi">KAROPSI</option></select>
- <select id="archive-period"><option value="all">Semua Periode</option></select>
- <button class="btn outline" id="archive-refresh" type="button">⟳ Muat ulang</button>
+<label class="search-field"><span>⌕</span><input id="archive-search" type="search" placeholder="Cari judul, penerima, isi kegiatan…"></label>
+<select id="archive-template"><option value="all">Semua Template</option><option value="karo_sdm">KARO SDM</option><option value="karopsi">KAROPSI</option></select>
+<select id="archive-status"><option value="all">Semua Status</option><option value="draft">Draft</option><option value="final">Final</option></select>
+<select id="archive-period"><option value="all">Semua Periode</option></select>
+<button class="btn outline" id="archive-refresh" type="button">⟳ Muat ulang</button>
 </section>
 <section class="panel archive-panel">
- <div class="table-wrap"><table class="data-table"><thead><tr><th>No.</th><th>Judul / Kepada</th><th>Template</th><th>Tanggal Laporan</th><th>Terakhir Diubah</th><th>Aksi</th></tr></thead><tbody id="archive-body"><tr><td colspan="6" class="empty-cell">Memuat laporan…</td></tr></tbody></table></div>
- <footer class="table-footer"><span id="archive-summary">Memuat…</span><nav id="archive-pages" class="pagination"></nav></footer>
+<div class="table-wrap"><table class="data-table"><thead><tr><th>No.</th><th>Judul / Kepada</th><th>Template</th><th>Status</th><th>Tanggal Laporan</th><th>Terakhir Diubah</th><th>Pembuat</th><th>Aksi</th></tr></thead><tbody id="archive-body"><tr><td colspan="8" class="empty-cell">Memuat laporan…</td></tr></tbody></table></div>
+<footer class="table-footer"><span id="archive-summary">Memuat…</span><nav id="archive-pages" class="pagination"></nav></footer>
 </section>
-
-    </main>
-  </div>
-</div>
-<div class="mobile-backdrop" id="mobile-backdrop"></div>
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
+</main></div></div>
+<div class="mobile-backdrop" id="mobile-backdrop"></div><div class="toast" id="toast" role="status" aria-live="polite"></div>
 </body></html>
