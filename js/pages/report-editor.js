@@ -23,6 +23,15 @@ function rankScore(value){
  const ranks={JENDERALPOLISI:18,JENDERAL:18,KOMJENPOL:17,KOMJEN:17,IRJENPOL:16,IRJEN:16,BRIGJENPOL:15,BRIGJEN:15,KOMBESPOL:14,KOMBES:14,AKBP:13,KOMPOL:12,AKP:11,IPTU:10,IPDA:9,AIPTU:8,AIPDA:7,BRIPKA:6,BRIGPOL:5,BRIPTU:4,BRIPDA:3,BHARAKA:2,BHARATU:1,BHARADA:0};
  return ranks[r]??-1;
 }
+function personKey(p){
+ const id=p?.personel_id||p?.id||"";
+ if(id)return `id:${String(id)}`;
+ return `name:${String(p?.pangkat||"").trim().toUpperCase()}|${String(p?.nama||"").trim().replace(/\s+/g," ").toUpperCase()}`;
+}
+function isPersonAlreadySelected(person){
+ const key=personKey(person);
+ return [...activities.querySelectorAll(".selected-person")].some(row=>personKey({id:row.dataset.id,pangkat:row.dataset.rank,nama:row.dataset.name})===key);
+}
 function renderPersonnelResults(card,query=""){
  const wrap=card.querySelector(".personnel-combobox"),list=wrap?.querySelector(".personnel-results");if(!list)return;
  const q=query.trim().toLocaleLowerCase("id-ID");
@@ -31,14 +40,17 @@ function renderPersonnelResults(card,query=""){
  list.replaceChildren();
  if(!results.length){const empty=document.createElement("div");empty.className="personnel-empty";empty.textContent="Personel tidak ditemukan";list.append(empty);return;}
  results.forEach(p=>{
-  const option=document.createElement("button");option.type="button";option.className="personnel-option";option.setAttribute("role","option");option.dataset.personId=p.id;
+  const alreadySelected=isPersonAlreadySelected(p);
+  const option=document.createElement("button");option.type="button";option.className="personnel-option";option.setAttribute("role","option");option.dataset.personId=p.id;option.disabled=alreadySelected;
+  if(alreadySelected)option.classList.add("is-already-selected");
   const initials=String(p.nama||"?").trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();
   const avatar=document.createElement("span");avatar.className="personnel-avatar";avatar.textContent=initials;
   const info=document.createElement("span");info.className="personnel-option-info";
   const name=document.createElement("strong");name.textContent=`${p.pangkat||""} ${p.nama||""}`.trim();
   const meta=document.createElement("small");meta.textContent=[p.nrp?`NRP ${p.nrp}`:"",p.jabatan,p.bagian].filter(Boolean).join(" · ")||"Personel aktif";
-  info.append(name,meta);const plus=document.createElement("span");plus.className="personnel-option-add";plus.textContent="＋";option.append(avatar,info,plus);
+  info.append(name,meta);const plus=document.createElement("span");plus.className="personnel-option-add";plus.textContent=alreadySelected?"✓ Sudah dipilih":"＋";option.append(avatar,info,plus);
   option.addEventListener("click",()=>{
+   if(isPersonAlreadySelected(p)){notify("Personel ini sudah ditambahkan dalam laporan.",true);renderPersonnelResults(card,wrap.querySelector(".personnel-search").value);return;}
    const select=card.querySelector(".master-person-select");select.value=String(p.id);select.dispatchEvent(new Event("change",{bubbles:true}));
    const search=wrap.querySelector(".personnel-search");search.value=`${p.pangkat||""} ${p.nama||""}`.trim();wrap.classList.remove("is-open");search.setAttribute("aria-expanded","false");
   });list.append(option);
@@ -50,14 +62,17 @@ function fillPersonOptions(card){
  const search=card.querySelector(".personnel-search");if(search){search.value="";renderPersonnelResults(card,"");}
 }
 function addSelectedPerson(card,p){
- if(!p?.pangkat||!p?.nama)return;
+ if(!p?.pangkat||!p?.nama)return false;
+ if(isPersonAlreadySelected(p))return false;
  const row=document.createElement("div");row.className="selected-person";
  Object.assign(row.dataset,{rank:p.pangkat,name:p.nama,degree:p.gelar||"",position:p.jabatan||"",id:p.personel_id||p.id||""});
  const detail=document.createElement("span");detail.className="selected-person-detail";
  const title=document.createElement("b");title.textContent=`${p.pangkat} ${p.nama}`;
  const sub=document.createElement("small");sub.textContent=[p.gelar,p.jabatan].filter(Boolean).join(" · ");detail.append(title,sub);
- const del=document.createElement("button");del.type="button";del.className="selected-person-remove";del.textContent="Hapus";del.addEventListener("click",()=>{row.remove();sortSelectedPeople(card);renderPreview();scheduleSave()});
+ const del=document.createElement("button");del.type="button";del.className="selected-person-remove";del.textContent="Hapus";del.addEventListener("click",()=>{row.remove();sortSelectedPeople(card);activities.querySelectorAll(".activity-card").forEach(c=>{const input=c.querySelector(".personnel-search");if(input)renderPersonnelResults(c,input.value);});renderPreview();scheduleSave()});
  row.append(detail,del);card.querySelector(".selected-people").append(row);sortSelectedPeople(card);
+ activities.querySelectorAll(".activity-card").forEach(c=>{const input=c.querySelector(".personnel-search");if(input)renderPersonnelResults(c,input.value);});
+ return true;
 }
 function sortSelectedPeople(card){
  const box=card.querySelector(".selected-people");
