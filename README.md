@@ -17,6 +17,14 @@ Aplikasi dibangun ulang dengan halaman HTML terpisah dan modul JavaScript per ha
 ## Instalasi GitHub Pages
 Upload seluruh isi folder hasil ekstrak langsung ke root repository. Jangan upload folder pembungkusnya. `index.html`, `pages/`, `assets/`, `css/`, dan `js/` harus sejajar di root repository.
 
+## Lokasi kegiatan (pembaruan)
+- **Lokasi saya sekarang** menggunakan Geolocation API browser. Browser meminta izin lokasi; fitur umumnya memerlukan HTTPS (GitHub Pages sudah menggunakan HTTPS).
+- **Pilih di peta** menggunakan Leaflet dan tile OpenStreetMap. Pengguna menggeser peta hingga waypoint/crosshair berada di titik kegiatan, lalu menekan **OK, Gunakan Lokasi**. Tombol **Batal** menutup peta tanpa mengubah lokasi pada form.
+- **Isi manual** memungkinkan pengguna memasukkan nama tempat dan alamat lengkap sendiri.
+- GPS/peta mengisi alamat hasil reverse geocoding ke textbox lokasi. Koordinat dan sumber lokasi disimpan sebagai `lokasi_meta` di JSON `data.kegiatan`; koordinat tidak ditampilkan dalam teks laporan.
+- Mengedit teks lokasi secara manual akan menghapus metadata koordinat sebelumnya agar alamat dan titik tidak berbeda.
+- Peta dan geocoding memerlukan koneksi internet. Versi ini menggunakan layanan publik OpenStreetMap/Nominatim; layanan publik memiliki kebijakan penggunaan dan batas kapasitas, sehingga untuk penggunaan produksi berskala tinggi sebaiknya memakai penyedia geocoding dengan SLA/API key atau layanan sendiri. Jangan melakukan request berulang secara masif.
+
 ## Supabase
 Frontend menggunakan project URL dan publishable key dari konfigurasi sebelumnya. Tabel dan kolom yang dipakai:
 - `laporan_cloud`: `id`, `user_id`, `judul`, `jenis`, `data`, `isi_laporan`, `updated_at`.

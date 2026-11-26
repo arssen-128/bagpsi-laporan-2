@@ -12,7 +12,7 @@ function collect(){
  kegiatan:[...activities.querySelectorAll(".activity-card")].map(card=>({
  nama:card.querySelector(".activity-name").value.trim(),tanggal:card.querySelector(".activity-date").value,hari:card.querySelector(".activity-day").value,
  mulai:card.querySelector(".activity-start").value,selesai:card.querySelector(".activity-until").checked?"hingga":card.querySelector(".activity-end").value,
- lokasi:card.querySelector(".activity-location").value.trim(),uraian:card.querySelector(".activity-description").value,hasil:card.querySelector(".activity-result").value,
+ lokasi:card.querySelector(".activity-location").value.trim(),lokasi_meta:JSON.parse(card.querySelector(".activity-location").dataset.meta||"null"),uraian:card.querySelector(".activity-description").value,hasil:card.querySelector(".activity-result").value,
  orang:[...card.querySelectorAll(".selected-person")].map(n=>({pangkat:n.dataset.rank,nama:n.dataset.name,gelar:n.dataset.degree,jabatan:n.dataset.position,personel_id:n.dataset.id||null}))
  }))};
 }
@@ -35,6 +35,7 @@ function addActivity(data={}){
  if($("#jenis").value==="karo_sdm"&&activities.children.length>=1)return;
  const card=template.content.firstElementChild.cloneNode(true);activities.append(card);fillPersonOptions(card);
  for(const [selector,key] of [[".activity-name","nama"],[".activity-date","tanggal"],[".activity-day","hari"],[".activity-start","mulai"],[".activity-location","lokasi"],[".activity-description","uraian"],[".activity-result","hasil"]])card.querySelector(selector).value=data[key]||"";
+ const locationInput=card.querySelector(".activity-location");if(data.lokasi_meta)locationInput.dataset.meta=JSON.stringify(data.lokasi_meta);else delete locationInput.dataset.meta;
  if(data.selesai==="hingga")card.querySelector(".activity-until").checked=true;else card.querySelector(".activity-end").value=data.selesai||"";
  (data.orang||[]).forEach(p=>addSelectedPerson(card,p));
  updateNumbers();renderPreview();return card;
@@ -61,7 +62,43 @@ async function save(){
  finally{$("#save-report").disabled=false;saving=false;if(saveAgain){saveAgain=false;scheduleSave();}}
 }
 function scheduleSave(){clearTimeout(saveTimer);$("#draft-status").textContent="Ada perubahan belum disimpan online.";saveTimer=setTimeout(()=>save(),2500);}
-activities.addEventListener("input",e=>{if(e.target.matches(".activity-date")){const d=e.target.value;const day=d?new Intl.DateTimeFormat("id-ID",{weekday:"long"}).format(new Date(d+"T00:00:00")):"";e.target.closest(".activity-card").querySelector(".activity-day").value=day;}renderPreview();scheduleSave();});
+
+// Location picker: GPS, draggable map waypoint, and manual address entry.
+let activeLocationCard=null,leafletMap=null,mapPoint={lat:-6.12,lng:106.15},mapBusy=false;
+const locationModal=$("#location-modal"),manualModal=$("#manual-location-modal");
+const showModal=el=>{el.classList.add("open");el.setAttribute("aria-hidden","false");document.body.classList.add("modal-open");};
+const hideModal=el=>{el.classList.remove("open");el.setAttribute("aria-hidden","true");if(!document.querySelector(".location-modal.open"))document.body.classList.remove("modal-open");};
+function applyLocation(address,meta){if(!activeLocationCard)return;const input=activeLocationCard.querySelector(".activity-location");input.value=address;input.dataset.meta=JSON.stringify(meta||null);renderPreview();scheduleSave();}
+async function reverseGeocode(lat,lng){
+ const url=`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}&zoom=18&addressdetails=1`;
+ const response=await fetch(url,{headers:{"Accept":"application/json"}});if(!response.ok)throw new Error(`Layanan alamat merespons ${response.status}`);
+ const result=await response.json();if(!result.display_name)throw new Error("Alamat untuk titik ini tidak ditemukan.");return result.display_name;
+}
+function updateMapPoint(){if(!leafletMap)return;const c=leafletMap.getCenter();mapPoint={lat:c.lat,lng:c.lng};$("#map-coordinates").textContent=`Lat: ${c.lat.toFixed(6)} · Lng: ${c.lng.toFixed(6)}`;$("#map-address").textContent="Titik dipilih. Tekan OK untuk mengambil alamat lengkap.";}
+function initMap(lat,lng){
+ if(!window.L){notify("Komponen peta belum termuat. Periksa koneksi internet lalu coba lagi.",true);return false;}
+ if(!leafletMap){leafletMap=window.L.map("location-map",{zoomControl:true}).setView([lat,lng],16);window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'}).addTo(leafletMap);leafletMap.on("moveend",updateMapPoint);}
+ setTimeout(()=>{leafletMap.invalidateSize();leafletMap.setView([lat,lng],16);updateMapPoint();},120);return true;
+}
+function openMap(card,lat=-6.12,lng=106.15){activeLocationCard=card;$("#map-search").value="";showModal(locationModal);if(initMap(lat,lng))$("#location-modal-title").textContent="Geser peta dan tentukan titik lokasi";}
+async function locateCurrent(card){
+ activeLocationCard=card;if(!navigator.geolocation){notify("Browser tidak mendukung GPS/lokasi perangkat.",true);return;}
+ notify("Mengambil lokasi perangkat…");navigator.geolocation.getCurrentPosition(async pos=>{
+  const {latitude:lat,longitude:lng,accuracy}=pos.coords;
+  try{const address=await reverseGeocode(lat,lng);applyLocation(address,{source:"gps",lat,lng,accuracy:Math.round(accuracy),captured_at:new Date().toISOString()});notify("Lokasi perangkat berhasil dimasukkan.");}
+  catch(e){notify(`Koordinat didapat, tetapi alamat gagal diambil: ${e.message}. Coba pilih di peta atau isi manual.`,true);}
+ },err=>{const msg={1:"Izin lokasi ditolak. Aktifkan izin lokasi browser.",2:"Lokasi perangkat tidak tersedia.",3:"Permintaan GPS melewati batas waktu."};notify(msg[err.code]||"Gagal mengambil lokasi perangkat.",true);},{enableHighAccuracy:true,timeout:15000,maximumAge:30000});
+}
+async function searchMapPlace(){const q=$("#map-search").value.trim();if(!q)return;try{$("#map-search-button").disabled=true;const u=`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(q)}`;const r=await fetch(u,{headers:{"Accept":"application/json"}});if(!r.ok)throw new Error(`Pencarian gagal (${r.status})`);const hits=await r.json();if(!hits.length)throw new Error("Lokasi tidak ditemukan.");leafletMap.setView([Number(hits[0].lat),Number(hits[0].lon)],17);}catch(e){notify(e.message,true);}finally{$("#map-search-button").disabled=false;}}
+async function confirmMapLocation(){if(mapBusy)return;mapBusy=true;const btn=$("#location-confirm");btn.disabled=true;btn.textContent="Mengambil alamat…";try{const address=await reverseGeocode(mapPoint.lat,mapPoint.lng);applyLocation(address,{source:"map",lat:mapPoint.lat,lng:mapPoint.lng,captured_at:new Date().toISOString()});hideModal(locationModal);notify("Titik peta berhasil dimasukkan ke lokasi kegiatan.");}catch(e){notify(`Alamat tidak dapat diambil: ${e.message}. Geser titik atau gunakan input manual.`,true);}finally{mapBusy=false;btn.disabled=false;btn.textContent="✓ OK, Gunakan Lokasi";}}
+function openManual(card){activeLocationCard=card;const input=card.querySelector(".activity-location");$("#manual-place").value="";$("#manual-address").value=input.value||"";showModal(manualModal);}
+function saveManual(){const address=$("#manual-address").value.trim(),place=$("#manual-place").value.trim();if(!address){notify("Alamat lengkap harus diisi.",true);$("#manual-address").focus();return;}applyLocation(place?`${place}, ${address}`:address,{source:"manual",place:place||null});hideModal(manualModal);notify("Alamat manual berhasil dimasukkan.");}
+activities.addEventListener("click",e=>{const card=e.target.closest(".activity-card");if(!card)return;if(e.target.closest(".location-current"))locateCurrent(card);if(e.target.closest(".location-map"))openMap(card);if(e.target.closest(".location-manual"))openManual(card);});
+$("#location-cancel").addEventListener("click",()=>hideModal(locationModal));$("#location-close").addEventListener("click",()=>hideModal(locationModal));$("#location-confirm").addEventListener("click",confirmMapLocation);$("#map-search-button").addEventListener("click",searchMapPlace);$("#map-search").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();searchMapPlace();}});
+$("#manual-cancel").addEventListener("click",()=>hideModal(manualModal));$("#manual-close").addEventListener("click",()=>hideModal(manualModal));$("#manual-save").addEventListener("click",saveManual);
+for(const modal of [locationModal,manualModal])modal.addEventListener("click",e=>{if(e.target===modal)hideModal(modal);});document.addEventListener("keydown",e=>{if(e.key==="Escape"){hideModal(locationModal);hideModal(manualModal);}});
+
+activities.addEventListener("input",e=>{if(e.target.matches(".activity-location"))delete e.target.dataset.meta;if(e.target.matches(".activity-date")){const d=e.target.value;const day=d?new Intl.DateTimeFormat("id-ID",{weekday:"long"}).format(new Date(d+"T00:00:00")):"";e.target.closest(".activity-card").querySelector(".activity-day").value=day;}renderPreview();scheduleSave();});
 $("#report-form").addEventListener("input",e=>{if(!e.target.closest("#activities")){renderPreview();scheduleSave();}});
 $("#report-form").addEventListener("change",e=>{
  if(e.target.id==="jenis"){const d=collect();d.jenis=e.target.value;d.penerima=e.target.value==="karopsi"?"Yth. KAROPSI SSDM POLRI":"Yth. KARO SDM POLDA BANTEN";d.kegiatan=d.kegiatan.slice(0,1);load(d);}

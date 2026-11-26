@@ -28,3 +28,11 @@
 
 ## Batas jaminan
 Tidak ada dasar untuk menjanjikan "no bug" sebelum uji end-to-end di lingkungan deployment, akun, dan database pemilik. Paket ini sudah lolos pemeriksaan statis di atas; koneksi live Supabase, RLS, dan hak admin belum dapat diverifikasi dari lingkungan pembuatan.
+
+
+## Pembaruan pemilih lokasi
+- Ditambahkan tiga jalur input: GPS perangkat, waypoint pada peta, dan input manual.
+- Hasil GPS/peta diubah menjadi alamat melalui reverse geocoding dan dimasukkan ke textbox lokasi.
+- Koordinat disimpan sebagai metadata pada JSON laporan, bukan pada teks laporan.
+- Tombol Batal pada dialog peta/manual tidak menerapkan perubahan lokasi.
+- Pemeriksaan pada paket ini bersifat statis; GPS, tile peta, geocoding, izin browser, dan penyimpanan Supabase tetap harus diuji pada deployment HTTPS dengan perangkat nyata.
