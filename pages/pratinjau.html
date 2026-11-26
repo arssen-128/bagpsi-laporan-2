@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#102b4c"><title>Pratinjau Teks — BAGPSI REPORT</title>
+<link rel="icon" href="../assets/logo-placeholder.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../css/base.css"><link rel="stylesheet" href="../css/app.css">
+<script type="module" src="../js/pages/preview.js"></script></head>
+<body class="app-page">
+<div class="app-frame">
+  <aside class="sidebar" id="sidebar">
+    <a class="brand" href="./dashboard.html"><img src="../assets/logo-placeholder.svg" alt=""><span><b>BAGPSI REPORT</b><small>RO SDM POLDA BANTEN</small></span></a>
+    <p class="nav-caption">MENU UTAMA</p><nav class="nav-list"><a class="nav-link " href="./dashboard.html"><span>▦</span>Dashboard</a><a class="nav-link " href="./buat-laporan.html"><span>▤</span>Buat laporan</a><a class="nav-link " href="./laporan-tersimpan.html"><span>▣</span>Laporan tersimpan</a><a class="nav-link active" href="./pratinjau.html"><span>≡</span>Pratinjau teks</a><a class="nav-link " href="./master-personel.html"><span>♟</span>Master personel</a></nav>
+    <div class="sidebar-foot"><i></i> Terhubung ke BAGPSI REPORT</div>
+  </aside>
+  <div class="app-main">
+    <header class="topbar">
+      <button class="menu-toggle" id="menu-toggle" aria-label="Buka menu" aria-expanded="false">☰</button>
+      <div class="account"><small>AKUN AKTIF</small><strong id="account-email">Memeriksa sesi…</strong><span id="sync-status">Menghubungkan…</span></div>
+      <div class="top-actions"><a class="btn primary-soft" href="./buat-laporan.html">＋ Laporan baru</a><button class="btn quiet" id="logout-button" type="button">Keluar</button></div>
+    </header>
+    <main class="page-content">
+      <header class="page-title"><div><p class="eyebrow">BAGPSI RO SDM POLDA BANTEN</p><h1>Pratinjau Teks</h1><p class="muted">Periksa dan salin format laporan yang sedang dikerjakan.</p></div></header>
+      
+<section class="panel preview-page-panel">
+ <div class="panel-head"><div><span class="kicker">HASIL FORMAT</span><h2>Pratinjau laporan</h2><p class="muted small">Menampilkan draf terakhir pada perangkat ini. Untuk membuka laporan tersimpan, gunakan menu Laporan Tersimpan.</p></div><div class="button-row"><a class="btn outline" href="./buat-laporan.html">Edit laporan</a><button class="btn primary" id="preview-copy" type="button">Salin teks</button></div></div>
+ <pre id="full-preview" class="full-preview"></pre>
+</section>
+
+    </main>
+  </div>
+</div>
+<div class="mobile-backdrop" id="mobile-backdrop"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body></html>

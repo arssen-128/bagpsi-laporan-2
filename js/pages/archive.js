@@ -1,0 +1,19 @@
+import {requireSession,notify} from "../core/auth-guard.js";
+import {TABLES} from "../config.js";
+const auth=await requireSession();if(!auth)throw new Error("Sesi tidak tersedia.");const {client}=auth;
+const $=s=>document.querySelector(s);let records=[],page=1;const size=5;
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function dateFor(r){const dates=(r.data?.kegiatan||[]).map(x=>x.tanggal).filter(Boolean).sort();return dates[0]||"";}
+function dateText(v,withTime=false){if(!v)return "—";const d=new Date(withTime?v:v+"T00:00:00");return Number.isNaN(d.getTime())?"—":new Intl.DateTimeFormat("id-ID",withTime?{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}:{day:"2-digit",month:"short",year:"numeric"}).format(d);}
+function filtered(){const q=$("#archive-search").value.trim().toLowerCase(),kind=$("#archive-template").value,period=$("#archive-period").value;return records.filter(r=>{const data=r.data||{},text=[r.judul,data.penerima,...(data.kegiatan||[]).flatMap(a=>[a.nama,a.uraian,a.hasil,a.lokasi])].join(" ").toLowerCase();const d=dateFor(r);return text.includes(q)&&(kind==="all"||r.jenis===kind)&&(period==="all"||d.startsWith(period));});}
+function render(){
+ const list=filtered(),pages=Math.max(1,Math.ceil(list.length/size));page=Math.min(page,pages);const start=(page-1)*size,part=list.slice(start,start+size);
+ $("#archive-body").innerHTML=part.length?part.map((r,i)=>`<tr><td>${start+i+1}.</td><td><strong>${esc(r.judul||"Laporan tanpa judul")}</strong><small>${esc(r.data?.penerima||"Penerima belum diisi")}</small></td><td><span class="tag ${r.jenis==="karopsi"?"psi":""}">${r.jenis==="karopsi"?"KAROPSI":"KARO SDM"}</span></td><td>${dateText(dateFor(r))}</td><td>${dateText(r.updated_at,true)}</td><td><a class="btn outline" href="./buat-laporan.html?id=${encodeURIComponent(r.id)}">Buka</a></td></tr>`).join(""):'<tr><td colspan="6" class="empty-cell">Tidak ada laporan yang cocok.</td></tr>';
+ $("#archive-summary").textContent=list.length?`Menampilkan ${start+1}–${Math.min(start+size,list.length)} dari ${list.length} laporan`:"Menampilkan 0 laporan";
+ const nav=$("#archive-pages");nav.replaceChildren();const add=(label,p,active=false,disabled=false)=>{const b=document.createElement("button");b.textContent=label;b.disabled=disabled;b.classList.toggle("active",active);b.addEventListener("click",()=>{page=p;render()});nav.append(b);};
+ add("‹",Math.max(1,page-1),false,page===1);for(let n=1;n<=pages;n++)add(n,n,n===page);add("›",Math.min(pages,page+1),false,page===pages);
+}
+function periods(){const node=$("#archive-period"),old=node.value,ps=[...new Set(records.map(dateFor).filter(Boolean).map(d=>d.slice(0,7)))].sort().reverse();node.replaceChildren(new Option("Semua Periode","all"));ps.forEach(p=>{const [y,m]=p.split("-");node.add(new Option(new Intl.DateTimeFormat("id-ID",{month:"long",year:"numeric"}).format(new Date(+y,+m-1,1)),p));});node.value=ps.includes(old)?old:"all";}
+async function load(){ $("#archive-body").innerHTML='<tr><td colspan="6" class="empty-cell">Memuat laporan…</td></tr>';const {data,error}=await client.from(TABLES.reports).select("id,judul,jenis,data,updated_at").order("updated_at",{ascending:false}).limit(100);if(error){$("#archive-body").innerHTML=`<tr><td colspan="6" class="empty-cell">${esc(error.message)}</td></tr>`;notify(`Gagal memuat arsip: ${error.message}`,true);return;}records=data||[];periods();page=1;render();}
+["input","change"].forEach(evt=>{["#archive-search","#archive-template","#archive-period"].forEach(sel=>$(sel).addEventListener(evt,()=>{page=1;render()}));});
+$("#archive-refresh").addEventListener("click",load);await load();

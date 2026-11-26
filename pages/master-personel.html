@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#102b4c"><title>Master Personel — BAGPSI REPORT</title>
+<link rel="icon" href="../assets/logo-placeholder.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../css/base.css"><link rel="stylesheet" href="../css/app.css">
+<script type="module" src="../js/pages/personnel.js"></script></head>
+<body class="app-page">
+<div class="app-frame">
+  <aside class="sidebar" id="sidebar">
+    <a class="brand" href="./dashboard.html"><img src="../assets/logo-placeholder.svg" alt=""><span><b>BAGPSI REPORT</b><small>RO SDM POLDA BANTEN</small></span></a>
+    <p class="nav-caption">MENU UTAMA</p><nav class="nav-list"><a class="nav-link " href="./dashboard.html"><span>▦</span>Dashboard</a><a class="nav-link " href="./buat-laporan.html"><span>▤</span>Buat laporan</a><a class="nav-link " href="./laporan-tersimpan.html"><span>▣</span>Laporan tersimpan</a><a class="nav-link " href="./pratinjau.html"><span>≡</span>Pratinjau teks</a><a class="nav-link active" href="./master-personel.html"><span>♟</span>Master personel</a></nav>
+    <div class="sidebar-foot"><i></i> Terhubung ke BAGPSI REPORT</div>
+  </aside>
+  <div class="app-main">
+    <header class="topbar">
+      <button class="menu-toggle" id="menu-toggle" aria-label="Buka menu" aria-expanded="false">☰</button>
+      <div class="account"><small>AKUN AKTIF</small><strong id="account-email">Memeriksa sesi…</strong><span id="sync-status">Menghubungkan…</span></div>
+      <div class="top-actions"><a class="btn primary-soft" href="./buat-laporan.html">＋ Laporan baru</a><button class="btn quiet" id="logout-button" type="button">Keluar</button></div>
+    </header>
+    <main class="page-content">
+      <header class="page-title"><div><p class="eyebrow">BAGPSI RO SDM POLDA BANTEN</p><h1>Master Personel</h1><p class="muted">Database induk personel untuk digunakan sebagai pelaksana kegiatan.</p></div></header>
+      
+<section id="admin-personnel" class="panel" hidden>
+ <div class="panel-head"><div><span class="kicker">ADMINISTRASI</span><h2 id="person-form-title">Tambah personel</h2></div></div>
+ <form id="person-form">
+  <input type="hidden" id="person-id">
+  <div class="form-grid">
+   <div class="field"><label>NRP (opsional)</label><input id="person-nrp" maxlength="30"></div>
+   <div class="field"><label>Pangkat</label><select id="person-rank" required><option value="">Pilih pangkat</option><option>JENDERAL</option><option>KOMJEN</option><option>IRJEN</option><option>BRIGJEN</option><option>KOMBES</option><option>KOMBES POL.</option><option>AKBP</option><option>KOMPOL</option><option>AKP</option><option>IPTU</option><option>IPDA</option><option>AIPTU</option><option>AIPDA</option><option>BRIPKA</option><option>BRIGPOL</option><option>BRIPTU</option><option>BRIPDA</option></select></div>
+   <div class="field span-2"><label>Nama lengkap</label><input id="person-name" required maxlength="150"></div>
+   <div class="field"><label>Gelar (opsional)</label><input id="person-degree" maxlength="120"></div>
+   <div class="field"><label>Jabatan</label><input id="person-position" maxlength="150"></div>
+   <div class="field span-2"><label>Bagian / satuan</label><input id="person-unit" maxlength="120"></div>
+  </div>
+  <div class="button-row"><button class="btn primary" type="submit" id="person-save">Simpan personel</button><button class="btn outline" type="button" id="person-reset">Kosongkan form</button></div>
+ </form>
+</section>
+<section class="panel">
+ <div class="archive-tools personnel-tools"><input id="person-search" type="search" placeholder="Cari nama, pangkat, NRP, jabatan, bagian…"><select id="person-status"><option value="aktif">Personel aktif</option><option value="semua">Semua status</option><option value="nonaktif">Nonaktif</option></select></div>
+ <div class="stat-grid compact-stats"><article class="stat-card"><span>Total</span><strong id="person-total">0</strong></article><article class="stat-card"><span>Aktif</span><strong id="person-active">0</strong></article><article class="stat-card"><span>Nonaktif</span><strong id="person-inactive">0</strong></article></div>
+ <p id="person-status-message" class="form-message" role="status"></p>
+ <div id="person-list" class="person-list"></div><nav id="person-pages" class="pagination" aria-label="Navigasi halaman personel"></nav>
+</section>
+
+    </main>
+  </div>
+</div>
+<div class="mobile-backdrop" id="mobile-backdrop"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body></html>
