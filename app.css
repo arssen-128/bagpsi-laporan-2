@@ -4,3 +4,6 @@
 
 /* Report lifecycle status */
 .status-badge{display:inline-flex;align-items:center;margin-top:7px;padding:4px 9px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.04em}.status-badge.draft{background:#fff3d6;color:#8a5a00}.status-badge.final{background:#dcfce9;color:#087443}.status-badge.archived{background:#e8eef5;color:#52657b}.tag.status-draft{background:#fff3d6;color:#8a5a00}.tag.status-final{background:#dcfce9;color:#087443}
+
+/* Archive lifecycle actions */
+.archive-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.action-btn{min-height:31px;padding:5px 9px;font-size:11px;white-space:nowrap}.danger-outline{border:1px solid #e5a4a4;background:#fff;color:#b42318;border-radius:8px;cursor:pointer}.danger-outline:hover{background:#fff1f0}.status-draft{background:#fff1cf;color:#875900}.status-final{background:#dcf7e8;color:#087443}.archive-panel .data-table{min-width:1050px}
