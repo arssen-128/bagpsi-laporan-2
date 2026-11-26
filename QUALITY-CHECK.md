@@ -36,3 +36,12 @@ Tidak ada dasar untuk menjanjikan "no bug" sebelum uji end-to-end di lingkungan 
 - Koordinat disimpan sebagai metadata pada JSON laporan, bukan pada teks laporan.
 - Tombol Batal pada dialog peta/manual tidak menerapkan perubahan lokasi.
 - Pemeriksaan pada paket ini bersifat statis; GPS, tile peta, geocoding, izin browser, dan penyimpanan Supabase tetap harus diuji pada deployment HTTPS dengan perangkat nyata.
+
+
+## Siklus Draft/Final
+- Autosave cloud hanya menulis `status='draft'`.
+- Simpan Draft tetap draft.
+- Finalisasi hanya melalui tombol eksplisit dan menyimpan `finalized_at`.
+- Final dikunci; perubahan dilakukan melalui Buat Revisi yang membuat record draft baru.
+- Arsip menampilkan dan memfilter Draft/Final.
+- SQL migration wajib dijalankan sebelum deploy; pemeriksaan browser/Supabase live belum dilakukan.

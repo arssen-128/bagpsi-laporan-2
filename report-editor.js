@@ -5,7 +5,7 @@ const auth=await requireSession();if(!auth)throw new Error("Sesi tidak tersedia.
 const {client,user}=auth;
 const DRAFT_KEY="bagpsi-report-draft-v3";
 const $=s=>document.querySelector(s),activities=$("#activities"),template=$("#activity-template");
-let reportId=new URLSearchParams(location.search).get("id"),masterPeople=[],saving=false,saveAgain=false,saveTimer=null;
+let reportId=new URLSearchParams(location.search).get("id"),masterPeople=[],saving=false,saveAgain=false,saveTimer=null,reportStatus="draft",finalData=null;
 function readDraft(){try{return JSON.parse(localStorage.getItem(DRAFT_KEY)||"null")}catch{return null}}
 function collect(){
  return {jenis:$("#jenis").value,penerima:$("#penerima").value.trim(),pembuka:$("#pembuka").value,penutup:$("#penutup").value,
@@ -50,18 +50,54 @@ async function loadPeople(){
  activities.querySelectorAll(".activity-card").forEach(fillPersonOptions);
 }
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-async function save(){
- if(saving){saveAgain=true;return;}saving=true;clearTimeout(saveTimer);$("#save-report").disabled=true;
- const data=collect(),payload={user_id:user.id,judul:(data.kegiatan[0]?.nama||"Laporan BAGPSI").slice(0,180),jenis:data.jenis,data,isi_laporan:buildReport(data),updated_at:new Date().toISOString()};
- try{
-  let result=reportId?await client.from(TABLES.reports).update(payload).eq("id",reportId).select("id").single():await client.from(TABLES.reports).insert(payload).select("id").single();
-  if(result.error)throw result.error;reportId=result.data.id;history.replaceState(null,"",`./buat-laporan.html?id=${encodeURIComponent(reportId)}`);
-  $("#editor-mode").textContent="Laporan tersimpan";$("#sync-status").textContent=`Tersimpan online · ${new Date().toLocaleTimeString("id-ID")}`;
-  notify("Laporan berhasil disimpan online.");
- }catch(e){notify(`Gagal menyimpan laporan: ${e.message}`,true);}
- finally{$("#save-report").disabled=false;saving=false;if(saveAgain){saveAgain=false;scheduleSave();}}
+function reportPayload(data,status="draft"){
+ const now=new Date().toISOString();
+ return {user_id:user.id,judul:(data.kegiatan[0]?.nama||"Laporan BAGPSI").slice(0,180),jenis:data.jenis,data,isi_laporan:buildReport(data),status,updated_at:now,finalized_at:status==="final"?now:null};
 }
-function scheduleSave(){clearTimeout(saveTimer);$("#draft-status").textContent="Ada perubahan belum disimpan online.";saveTimer=setTimeout(()=>save(),2500);}
+function setEditorMode(status){
+ reportStatus=status;
+ const isFinal=status==="final";
+ document.querySelectorAll("#report-form input,#report-form textarea,#report-form select,#report-form button").forEach(el=>{
+  if(["new-report","copy-preview"].includes(el.id))return;
+  el.disabled=isFinal;
+ });
+ $("#save-draft").hidden=isFinal;$("#finalize-report").hidden=isFinal;
+ $("#new-report").textContent=isFinal?"Buat Revisi":"Laporan baru";
+ $("#report-status-badge").textContent=isFinal?"FINAL":"DRAFT";
+ $("#report-status-badge").className=`status-badge ${isFinal?"final":"draft"}`;
+ $("#editor-mode").textContent=isFinal?"Laporan final — terkunci":"Laporan dalam penyusunan";
+ $("#draft-status").textContent=isFinal?`Difinalisasi ${finalData?.finalized_at?new Date(finalData.finalized_at).toLocaleString("id-ID"):""}. Buat revisi untuk melakukan perubahan.`:"Perubahan disimpan sebagai draft otomatis.";
+}
+async function persistDraft({quiet=false}={}){
+ if(reportStatus==="final"){if(!quiet)notify("Laporan final terkunci. Gunakan Buat Revisi untuk mengubahnya.",true);return false;}
+ if(saving){saveAgain=true;return false;}saving=true;clearTimeout(saveTimer);$("#save-draft").disabled=true;
+ const data=collect(),payload=reportPayload(data,"draft");
+ try{
+  let result=reportId?await client.from(TABLES.reports).update(payload).eq("id",reportId).eq("user_id",user.id).select("id,status").single():await client.from(TABLES.reports).insert(payload).select("id,status").single();
+  if(result.error)throw result.error;reportId=result.data.id;reportStatus="draft";
+  history.replaceState(null,"",`./buat-laporan.html?id=${encodeURIComponent(reportId)}`);
+  $("#sync-status").textContent=`Draft tersimpan online · ${new Date().toLocaleTimeString("id-ID")}`;
+  $("#draft-status").textContent="Draft tersimpan online. Belum menjadi laporan final.";
+  if(!quiet)notify("Draft berhasil disimpan. Laporan belum difinalisasi.");
+  return true;
+ }catch(e){if(!quiet)notify(`Draft gagal disimpan online: ${e.message}. Salinan lokal tetap tersedia jika browser tidak menghapus datanya.`,true);else $("#draft-status").textContent=`Gagal autosave online: ${e.message}. Draft lokal masih tersimpan.`;return false;}
+ finally{$("#save-draft").disabled=false;saving=false;if(saveAgain){saveAgain=false;scheduleSave();}}
+}
+async function finalizeReport(){
+ if(reportStatus==="final")return;
+ const data=collect();
+ if(!data.kegiatan.length||!data.kegiatan[0].nama){notify("Isi nama kegiatan sebelum finalisasi.",true);return;}
+ if(!confirm("Finalisasi laporan ini? Setelah final, laporan akan dikunci. Untuk perubahan berikutnya gunakan Buat Revisi."))return;
+ const saved=reportId?true:await persistDraft({quiet:false});if(!saved||!reportId)return;
+ const payload=reportPayload(data,"final");
+ $("#finalize-report").disabled=true;
+ try{
+  const {data:row,error}=await client.from(TABLES.reports).update(payload).eq("id",reportId).eq("user_id",user.id).eq("status","draft").select("id,status,finalized_at").single();
+  if(error)throw error;finalData=row;setEditorMode("final");localStorage.removeItem(DRAFT_KEY);$("#sync-status").textContent="Laporan final tersimpan online";notify("Laporan berhasil difinalisasi.");
+ }catch(e){notify(`Finalisasi gagal: ${e.message}. Data tetap berstatus draft.`,true);}
+ finally{$("#finalize-report").disabled=false;}
+}
+function scheduleSave(){clearTimeout(saveTimer);if(reportStatus==="final")return;$("#draft-status").textContent="Perubahan tersimpan lokal; autosave online sebagai draft dalam 2,5 detik…";saveTimer=setTimeout(()=>persistDraft({quiet:true}),2500);}
 
 // Location picker: GPS, draggable map waypoint, and manual address entry.
 let activeLocationCard=null,leafletMap=null,mapPoint={lat:-6.12,lng:106.15},mapBusy=false;
@@ -98,27 +134,34 @@ $("#location-cancel").addEventListener("click",()=>hideModal(locationModal));$("
 $("#manual-cancel").addEventListener("click",()=>hideModal(manualModal));$("#manual-close").addEventListener("click",()=>hideModal(manualModal));$("#manual-save").addEventListener("click",saveManual);
 for(const modal of [locationModal,manualModal])modal.addEventListener("click",e=>{if(e.target===modal)hideModal(modal);});document.addEventListener("keydown",e=>{if(e.key==="Escape"){hideModal(locationModal);hideModal(manualModal);}});
 
-activities.addEventListener("input",e=>{if(e.target.matches(".activity-location"))delete e.target.dataset.meta;if(e.target.matches(".activity-date")){const d=e.target.value;const day=d?new Intl.DateTimeFormat("id-ID",{weekday:"long"}).format(new Date(d+"T00:00:00")):"";e.target.closest(".activity-card").querySelector(".activity-day").value=day;}renderPreview();scheduleSave();});
-$("#report-form").addEventListener("input",e=>{if(!e.target.closest("#activities")){renderPreview();scheduleSave();}});
+activities.addEventListener("input",e=>{if(reportStatus==="final")return;if(e.target.matches(".activity-location"))delete e.target.dataset.meta;if(e.target.matches(".activity-date")){const d=e.target.value;const day=d?new Intl.DateTimeFormat("id-ID",{weekday:"long"}).format(new Date(d+"T00:00:00")):"";e.target.closest(".activity-card").querySelector(".activity-day").value=day;}renderPreview();scheduleSave();});
+$("#report-form").addEventListener("input",e=>{if(reportStatus==="final")return;if(!e.target.closest("#activities")){renderPreview();scheduleSave();}});
 $("#report-form").addEventListener("change",e=>{
+ if(reportStatus==="final")return;
  if(e.target.id==="jenis"){const d=collect();d.jenis=e.target.value;d.penerima=e.target.value==="karopsi"?"Yth. KAROPSI SSDM POLRI":"Yth. KARO SDM POLDA BANTEN";d.kegiatan=d.kegiatan.slice(0,1);load(d);}
  if(e.target.matches(".master-person-select")){const p=masterPeople.find(x=>x.id===e.target.value);if(p){const c=e.target.closest(".activity-card");c.querySelector(".person-rank").value=p.pangkat;c.querySelector(".person-name").value=p.nama;c.querySelector(".person-degree").value=p.gelar||"";c.querySelector(".person-position").value=p.jabatan||"";}}
  if(e.target.matches(".activity-until"))e.target.closest(".activity-card").querySelector(".activity-end").disabled=e.target.checked;
  renderPreview();scheduleSave();
 });
 activities.addEventListener("click",e=>{
+ if(reportStatus==="final")return;
  const card=e.target.closest(".activity-card");if(!card)return;
  if(e.target.closest(".add-person")){const rank=card.querySelector(".person-rank").value,name=card.querySelector(".person-name").value.trim();if(!rank||!name){notify("Pilih personel dari master terlebih dahulu.",true);return;}addSelectedPerson(card,{pangkat:rank,nama:name,gelar:card.querySelector(".person-degree").value,jabatan:card.querySelector(".person-position").value,personel_id:card.querySelector(".master-person-select").value});card.querySelector(".person-rank").value="";card.querySelector(".person-name").value="";card.querySelector(".person-degree").value="";card.querySelector(".person-position").value="";card.querySelector(".master-person-select").value="";renderPreview();scheduleSave();}
  if(e.target.closest(".remove-activity")&&activities.children.length>1){card.remove();updateNumbers();renderPreview();scheduleSave();}
 });
 $("#add-activity").addEventListener("click",()=>{if($("#jenis").value==="karopsi"){addActivity();scheduleSave();}});
-$("#save-report").addEventListener("click",save);
-$("#new-report").addEventListener("click",()=>{if(!confirm("Kosongkan form dan mulai laporan baru?"))return;clearTimeout(saveTimer);saveAgain=false;reportId=null;history.replaceState(null,"","./buat-laporan.html");load(DEFAULT_REPORT());$("#editor-mode").textContent="Laporan baru";});
+$("#save-draft").addEventListener("click",()=>persistDraft());
+$("#finalize-report").addEventListener("click",finalizeReport);
+$("#new-report").addEventListener("click",()=>{
+ const isRevision=reportStatus==="final";
+ if(!confirm(isRevision?"Buat revisi baru dari laporan final ini? Laporan final sebelumnya tetap tersimpan." : "Mulai laporan baru? Draft yang sedang dikerjakan tetap tersimpan di arsip."))return;
+ clearTimeout(saveTimer);saveAgain=false;const seed=isRevision?collect():DEFAULT_REPORT();reportId=null;reportStatus="draft";finalData=null;history.replaceState(null,"","./buat-laporan.html");load(seed);setEditorMode("draft");scheduleSave();
+ });
 $("#copy-preview").addEventListener("click",async()=>{try{await navigator.clipboard.writeText($("#live-preview").textContent);notify("Teks laporan disalin.");}catch{notify("Clipboard tidak tersedia pada browser ini.",true);}});
 $("#sync-status").textContent="Memeriksa koneksi…";
 await loadPeople();
 if(reportId){
- const {data,error}=await client.from(TABLES.reports).select("id,data").eq("id",reportId).single();
+ const {data,error}=await client.from(TABLES.reports).select("id,data,status,finalized_at").eq("id",reportId).eq("user_id",user.id).single();
  if(error){notify(`Laporan gagal dibuka: ${error.message}`,true);load(readDraft()||DEFAULT_REPORT());}
- else{load(data.data);$("#editor-mode").textContent="Mengedit laporan tersimpan";}
-}else load(readDraft()||DEFAULT_REPORT());
+ else{load(data.data);finalData=data;if(data.status==="final")localStorage.removeItem(DRAFT_KEY);setEditorMode(data.status==="final"?"final":"draft");}
+}else{load(readDraft()||DEFAULT_REPORT());setEditorMode("draft");}

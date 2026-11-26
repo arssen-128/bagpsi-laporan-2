@@ -48,3 +48,14 @@ Ganti Logo BAGPSI menggunakan file `assets/PSI.png` yang sudah disertakan. Selur
 
 ## Batas verifikasi
 Paket diperiksa untuk sintaks JS, import lokal, referensi file HTML/CSS/JS, dan konsistensi ID selector. Koneksi live Supabase, RLS, RPC admin, dan perilaku browser setelah deployment harus diuji pada project pemilik.
+
+
+## Siklus status laporan (Draft / Final)
+1. Perubahan form disimpan lokal dan di-autosave ke Supabase sebagai `draft` setelah 2,5 detik. Autosave tidak pernah memfinalisasi laporan.
+2. Tombol **Simpan Draft** menyimpan/memperbarui status `draft`.
+3. Tombol **Finalisasi Laporan** mengubah status menjadi `final` setelah konfirmasi. Laporan final dikunci agar tidak tertimpa oleh autosave.
+4. Untuk mengubah laporan final, pilih **Buat Revisi**. Aplikasi membuat record draft baru dari isi final; record final sebelumnya tetap dipertahankan.
+5. Halaman Laporan Tersimpan memiliki filter status Draft/Final dan badge status.
+
+### WAJIB sebelum deploy
+Jalankan SQL `supabase/migrations/20261126_report_status_draft_final.sql` satu kali pada Supabase SQL Editor. Migrasi menambahkan `status` dan `finalized_at`; semua record lama menjadi `draft` secara konservatif karena autosave versi lama tidak membedakan status. Migrasi tidak mengubah RLS/policies. Jangan menjalankan update massal yang menandai data lama sebagai final tanpa pemeriksaan manual.
