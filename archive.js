@@ -1,17 +1,51 @@
 import {requireSession,notify} from "../core/auth-guard.js";
 import {TABLES} from "../config.js";
-const auth=await requireSession();if(!auth)throw new Error("Sesi tidak tersedia.");
-const {client,user}=auth;const $=s=>document.querySelector(s);let records=[],page=1,isAdmin=false;const size=5;
+const auth=await requireSession();
+if(!auth) throw new Error("Sesi tidak tersedia.");
+const {client,user}=auth;
+const $=s=>document.querySelector(s);
+let records=[],page=1,isAdmin=false;
+const pageSize=5;
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-function dateFor(r){const dates=(r.data?.kegiatan||[]).map(x=>x.tanggal).filter(Boolean).sort();return dates[0]||"";}
-function dateText(v,time=false){if(!v)return "—";const d=new Date(time?v:v+"T00:00:00");return Number.isNaN(d.getTime())?"—":new Intl.DateTimeFormat("id-ID",time?{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}:{day:"2-digit",month:"short",year:"numeric"}).format(d);}
-function filtered(){const q=$("#archive-search").value.trim().toLowerCase(),kind=$("#archive-template").value,period=$("#archive-period").value,status=$("#archive-status").value;return records.filter(r=>{const d=r.data||{},text=[r.judul,d.penerima,...(d.kegiatan||[]).flatMap(a=>[a.nama,a.uraian,a.hasil,a.lokasi])].join(" ").toLowerCase(),dt=dateFor(r);return text.includes(q)&&(kind==="all"||r.jenis===kind)&&(period==="all"||dt.startsWith(period))&&(status==="all"||r.status===status);});}
-function actions(r){const own=r.user_id===user.id,canManage=own||isAdmin;const read=`<a class="btn outline action-btn" href="./baca-laporan.html?id=${encodeURIComponent(r.id)}">Baca</a>`;let edit="";if(r.status==="draft"&&canManage)edit=`<a class="btn outline action-btn" href="./buat-laporan.html?id=${encodeURIComponent(r.id)}">Edit</a>`;else if(r.status==="final"&&canManage)edit=`<a class="btn outline action-btn" href="./buat-laporan.html?id=${encodeURIComponent(r.id)}">Buat Revisi</a>`;const del=(r.status==="draft"&&canManage)||(r.status==="final"&&isAdmin)?`<button class="btn danger-outline action-btn" data-delete="${esc(r.id)}">Hapus</button>`:"";return `<div class="archive-actions">${read}${edit}${del}</div>`;}
-function render(){const list=filtered(),pages=Math.max(1,Math.ceil(list.length/size));page=Math.min(page,pages);const start=(page-1)*size,part=list.slice(start,start+size);$("#archive-body").innerHTML=part.length?part.map((r,i)=>`<tr><td>${start+i+1}.</td><td><strong>${esc(r.judul||"Laporan tanpa judul")}</strong><small>${esc(r.data?.penerima||"Penerima belum diisi")}</small></td><td><span class="tag ${r.jenis==="karopsi"?"psi":""}">${r.jenis==="karopsi"?"KAROPSI":"KARO SDM"}</span></td><td><span class="tag status-${r.status}">${r.status==="final"?"FINAL":"DRAFT"}</span></td><td>${dateText(dateFor(r))}</td><td>${dateText(r.updated_at,true)}</td><td>${esc(r.owner_email||r.user_id||"—")}</td><td>${actions(r)}</td></tr>`).join(""):'<tr><td colspan="8" class="empty-cell">Tidak ada laporan yang dapat ditampilkan.</td></tr>';
- $("#archive-summary").textContent=list.length?`Menampilkan ${start+1}–${Math.min(start+size,list.length)} dari ${list.length} laporan`:"Menampilkan 0 laporan";const nav=$("#archive-pages");nav.replaceChildren();const add=(label,p,active=false,disabled=false)=>{const b=document.createElement("button");b.textContent=label;b.disabled=disabled;b.classList.toggle("active",active);b.addEventListener("click",()=>{page=p;render()});nav.append(b)};add("‹",Math.max(1,page-1),false,page===1);for(let n=1;n<=pages;n++)add(n,n,n===page);add("›",Math.min(pages,page+1),false,page===pages);}
-function periods(){const node=$("#archive-period"),old=node.value,ps=[...new Set(records.map(dateFor).filter(Boolean).map(d=>d.slice(0,7)))].sort().reverse();node.replaceChildren(new Option("Semua Periode","all"));ps.forEach(p=>{const[y,m]=p.split("-");node.add(new Option(new Intl.DateTimeFormat("id-ID",{month:"long",year:"numeric"}).format(new Date(+y,+m-1,1)),p))});node.value=ps.includes(old)?old:"all";}
-async function load(){ $("#archive-body").innerHTML='<tr><td colspan="8" class="empty-cell">Memuat laporan…</td></tr>';const {data,error}=await client.from(TABLES.reports).select("id,user_id,judul,jenis,data,status,finalized_at,updated_at").is("deleted_at",null).order("updated_at",{ascending:false}).limit(1000);if(error){$("#archive-body").innerHTML=`<tr><td colspan="8" class="empty-cell">${esc(error.message)}. Pastikan migrasi database sudah dijalankan.</td></tr>`;notify(`Gagal memuat arsip: ${error.message}`,true);return;}records=(data||[]).map(r=>({...r,status:r.status||"draft"}));periods();page=1;render();}
-async function removeRecord(id){const r=records.find(x=>x.id===id);if(!r)return;const final=r.status==="final";if(final&&!isAdmin){notify("Hanya admin yang dapat menghapus laporan final.",true);return;}if(!confirm(final?"Hapus laporan FINAL ini secara permanen? Tindakan ini tidak dapat dibatalkan.":"Hapus draft ini?"))return;const {error}=await client.from(TABLES.reports).delete().eq("id",id);if(error){notify(`Gagal menghapus: ${error.message}`,true);return;}notify("Laporan berhasil dihapus.");await load();}
+function reportDate(r){return (r.data?.kegiatan||[]).map(x=>x.tanggal).filter(Boolean).sort()[0]||"";}
+function fmt(v,withTime=false){if(!v)return "—";const d=new Date(withTime?v:v+"T00:00:00");return Number.isNaN(d.getTime())?"—":new Intl.DateTimeFormat("id-ID",withTime?{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}:{day:"2-digit",month:"short",year:"numeric"}).format(d);}
+function actions(r){
+ const own=r.user_id===user.id, canManage=own||isAdmin;
+ const read=`<a class="btn outline action-btn" href="./baca-laporan.html?id=${encodeURIComponent(r.id)}">Baca</a>`;
+ let edit="";
+ if(r.status==="draft"&&canManage) edit=`<a class="btn outline action-btn" href="./buat-laporan.html?id=${encodeURIComponent(r.id)}">Edit</a>`;
+ const delAllowed=(r.status==="draft"&&canManage)||(r.status==="final"&&isAdmin);
+ const del=delAllowed?`<button class="btn danger-outline action-btn" type="button" data-delete="${esc(r.id)}">Hapus</button>`:"";
+ return `<div class="archive-actions">${read}${edit}${del}</div>`;
+}
+function filtered(){
+ const q=$("#archive-search").value.trim().toLowerCase(),kind=$("#archive-template").value,period=$("#archive-period").value,status=$("#archive-status").value;
+ return records.filter(r=>{const d=r.data||{},txt=[r.judul,d.penerima,...(d.kegiatan||[]).flatMap(a=>[a.nama,a.uraian,a.hasil,a.lokasi])].join(" ").toLowerCase(),dt=reportDate(r);return txt.includes(q)&&(kind==="all"||r.jenis===kind)&&(period==="all"||dt.startsWith(period))&&(status==="all"||r.status===status);});
+}
+function render(){
+ const list=filtered(),pages=Math.max(1,Math.ceil(list.length/pageSize));page=Math.min(page,pages);const start=(page-1)*pageSize,part=list.slice(start,start+pageSize);
+ $("#archive-body").innerHTML=part.length?part.map((r,i)=>`<tr><td>${start+i+1}.</td><td><strong>${esc(r.judul||"Laporan tanpa judul")}</strong><small>${esc(r.data?.penerima||"Penerima belum diisi")}</small></td><td><span class="tag ${r.jenis==="karopsi"?"psi":""}">${r.jenis==="karopsi"?"KAROPSI":"KARO SDM"}</span></td><td><span class="tag status-${r.status}">${r.status==="final"?"FINAL":"DRAFT"}</span></td><td>${fmt(reportDate(r))}</td><td>${fmt(r.updated_at,true)}</td><td>${esc(r.user_id===user.id?"Anda":(r.user_id||"—"))}</td><td>${actions(r)}</td></tr>`).join(""):'<tr><td colspan="8" class="empty-cell">Tidak ada laporan yang dapat ditampilkan.</td></tr>';
+ $("#archive-summary").textContent=list.length?`Menampilkan ${start+1}–${Math.min(start+pageSize,list.length)} dari ${list.length} laporan`:"Menampilkan 0 laporan";
+ const nav=$("#archive-pages");nav.replaceChildren();const add=(label,p,active=false,disabled=false)=>{const b=document.createElement("button");b.textContent=label;b.disabled=disabled;b.classList.toggle("active",active);b.addEventListener("click",()=>{page=p;render();});nav.append(b);};add("‹",Math.max(1,page-1),false,page===1);for(let n=1;n<=pages;n++)add(String(n),n,n===page);add("›",Math.min(pages,page+1),false,page===pages);
+}
+function buildPeriods(){const node=$("#archive-period"),old=node.value,ps=[...new Set(records.map(reportDate).filter(Boolean).map(x=>x.slice(0,7)))].sort().reverse();node.replaceChildren(new Option("Semua Periode","all"));ps.forEach(p=>{const[y,m]=p.split("-");node.add(new Option(new Intl.DateTimeFormat("id-ID",{month:"long",year:"numeric"}).format(new Date(+y,+m-1,1)),p));});node.value=ps.includes(old)?old:"all";}
+async function load(){
+ $("#archive-body").innerHTML='<tr><td colspan="8" class="empty-cell">Memuat laporan…</td></tr>';
+ const {data,error}=await client.from(TABLES.reports).select("id,user_id,judul,jenis,data,status,finalized_at,updated_at").order("updated_at",{ascending:false}).limit(1000);
+ if(error){$("#archive-body").innerHTML=`<tr><td colspan="8" class="empty-cell">${esc(error.message)}</td></tr>`;notify(`Gagal memuat arsip: ${error.message}`,true);return;}
+ records=(data||[]).map(r=>({...r,status:r.status||"draft"}));buildPeriods();page=1;render();
+}
+async function removeRecord(id){
+ const r=records.find(x=>x.id===id);if(!r)return;
+ if(r.status==="final"&&!isAdmin){notify("Hanya admin yang dapat menghapus laporan final.",true);return;}
+ if(r.status==="draft"&&r.user_id!==user.id&&!isAdmin){notify("Anda tidak berhak menghapus draft ini.",true);return;}
+ if(!confirm(r.status==="final"?"Hapus laporan FINAL ini? Hanya admin yang dapat melakukan tindakan ini.":"Hapus draft ini?"))return;
+ const {error}=await client.from(TABLES.reports).delete().eq("id",id);
+ if(error){notify(`Gagal menghapus laporan: ${error.message}`,true);return;}
+ notify("Laporan berhasil dihapus.");await load();
+}
 const {data:adminResult,error:adminError}=await client.rpc("is_bagpsi_admin");isAdmin=!adminError&&adminResult===true;
-["input","change"].forEach(evt=>["#archive-search","#archive-template","#archive-period","#archive-status"].forEach(sel=>$(sel).addEventListener(evt,()=>{page=1;render()})));
-$("#archive-refresh").addEventListener("click",load);$("#archive-body").addEventListener("click",e=>{const b=e.target.closest("[data-delete]");if(b)removeRecord(b.dataset.delete)});await load();
+["input","change"].forEach(evt=>["#archive-search","#archive-template","#archive-period","#archive-status"].forEach(sel=>$(sel).addEventListener(evt,()=>{page=1;render();})));
+$("#archive-refresh").addEventListener("click",load);
+$("#archive-body").addEventListener("click",e=>{const b=e.target.closest("[data-delete]");if(b)removeRecord(b.dataset.delete);});
+await load();
