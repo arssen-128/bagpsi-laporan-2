@@ -36,7 +36,7 @@ Bersama ini disampaikan laporan kegiatan sebagai berikut.</textarea></div>
     </section>
     <div id="activities"></div>
     <div class="button-row"><button class="btn outline" type="button" id="add-activity">＋ Tambah kegiatan</button><span class="muted small">KARO SDM dibatasi satu kegiatan; KAROPSI dapat memuat beberapa kegiatan.</span></div>
-    <section class="panel save-panel"><div><b id="editor-mode">Laporan baru</b><p class="muted small" id="draft-status">Draf tersimpan sementara di perangkat ini.</p></div><div class="button-row"><button class="btn outline" type="button" id="new-report">Kosongkan</button><button class="btn primary" type="button" id="save-report">Simpan online</button></div></section>
+    <section class="panel save-panel"><div><b id="editor-mode">Laporan baru</b><p class="muted small" id="draft-status">Draf tersimpan sementara di perangkat ini.</p><span id="report-status-badge" class="status-badge draft">DRAF</span></div><div class="button-row"><button class="btn outline" type="button" id="new-report">Laporan baru</button><button class="btn outline" type="button" id="save-draft">Simpan Draft</button><button class="btn primary" type="button" id="finalize-report">Finalisasi Laporan</button></div></section>
   </form>
 </section>
 <aside class="preview-side"><div class="panel preview-sticky"><div class="panel-head"><div><span class="kicker">LIVE PREVIEW</span><h2>Teks laporan</h2></div><a href="./pratinjau.html">Buka penuh ↗</a></div><pre id="live-preview"></pre><button class="btn outline full" id="copy-preview" type="button">Salin teks</button></div></aside>
@@ -64,7 +64,17 @@ Bersama ini disampaikan laporan kegiatan sebagai berikut.</textarea></div>
   <div class="field span-2"><label>Hasil kegiatan</label><textarea class="activity-result" rows="3"></textarea></div>
  </div>
  <div class="personnel-picker">
-  <div class="field"><label>Pilih personel dari master</label><select class="master-person-select"><option value="">Memuat personel…</option></select></div>
+  <div class="field personnel-master-field">
+   <label>Pilih personel dari master</label>
+   <div class="personnel-combobox">
+    <span class="personnel-search-icon" aria-hidden="true">⌕</span>
+    <input class="personnel-search" type="search" placeholder="Cari nama, pangkat, atau jabatan…" autocomplete="off" aria-label="Cari personel dari master" aria-expanded="false">
+    <span class="personnel-count" aria-hidden="true">MASTER</span>
+    <div class="personnel-results" role="listbox" aria-label="Hasil pencarian personel"></div>
+   </div>
+   <select class="master-person-select" tabindex="-1" aria-hidden="true"><option value="">Memuat personel…</option></select>
+   <small class="personnel-hint">Pilih personel untuk mengisi data pelaksana secara otomatis. Personel dapat dipilih kembali.</small>
+  </div>
   <div class="form-grid personnel-inputs">
    <div class="field"><label>Pangkat</label><select class="person-rank"><option value="">Pilih pangkat</option><option>JENDERAL</option><option>KOMJEN</option><option>IRJEN</option><option>BRIGJEN</option><option>KOMBES</option><option>KOMBES POL.</option><option>AKBP</option><option>KOMPOL</option><option>AKP</option><option>IPTU</option><option>IPDA</option><option>AIPTU</option><option>AIPDA</option><option>BRIPKA</option><option>BRIGPOL</option><option>BRIPTU</option><option>BRIPDA</option></select></div>
    <div class="field"><label>Nama</label><input class="person-name" readonly></div>
