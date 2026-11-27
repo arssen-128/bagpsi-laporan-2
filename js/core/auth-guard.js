@@ -59,20 +59,44 @@ function setupMobileMenu() {
   const frame = document.querySelector(".app-frame");
   const toggle = document.querySelector("#menu-toggle");
   const backdrop = document.querySelector("#mobile-backdrop");
+  if (!frame || !toggle) return;
+
   const close = () => {
-    frame?.classList.remove("menu-open");
-    toggle?.setAttribute("aria-expanded", "false");
+    frame.classList.remove("menu-open");
+    toggle.setAttribute("aria-expanded", "false");
   };
 
-  if (toggle && !toggle.dataset.bound) {
+  if (!toggle.dataset.bound) {
     toggle.dataset.bound = "1";
-    toggle.addEventListener("click", () => {
-      const open = !frame?.classList.contains("menu-open");
-      frame?.classList.toggle("menu-open", open);
-      toggle.setAttribute("aria-expanded", String(Boolean(open)));
-    });
+    const toggleMenu = (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const open = !frame.classList.contains("menu-open");
+      frame.classList.toggle("menu-open", open);
+      toggle.setAttribute("aria-expanded", String(open));
+    };
+    toggle.addEventListener("click", toggleMenu);
+    // Explicit touch support for mobile browsers; suppress synthetic follow-up click.
+    let touchHandled = false;
+    toggle.addEventListener("touchend", (event) => {
+      if (event.cancelable) event.preventDefault();
+      touchHandled = true;
+      toggleMenu(event);
+      window.setTimeout(() => { touchHandled = false; }, 450);
+    }, { passive: false });
+    toggle.addEventListener("click", (event) => {
+      if (touchHandled) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }
+    }, true);
   }
-  backdrop?.addEventListener("click", close);
+
+  if (backdrop && !backdrop.dataset.menuBound) {
+    backdrop.dataset.menuBound = "1";
+    backdrop.addEventListener("click", close);
+    backdrop.addEventListener("touchend", close, { passive: true });
+  }
   document.querySelectorAll(".nav-link").forEach(link => {
     if (link.dataset.menuBound) return;
     link.dataset.menuBound = "1";
