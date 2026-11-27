@@ -36,6 +36,9 @@ async function start() {
   const { client } = auth;
   if (current.key === "dashboard") {
     await renderDashboard(client);
+  } else if (current.key === "users") {
+    const { renderUsersPage } = await import("./users-page.js");
+    await renderUsersPage();
   } else {
     renderModule(current.key);
   }

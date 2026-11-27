@@ -1,1 +1,89 @@
-<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin Panel · BAGPSI REPORT</title><link rel="stylesheet" href="../../css/admin/admin.css"></head><body><div class="layout"><aside class="sidebar"><div class="brand"><div class="brand-mark">✦</div><div><b>BAGPSI REPORT</b><small>ADMIN CONTROL PANEL</small></div></div><nav id="admin-nav"><a href="index.html" data-page="dashboard">▦ <span>Dashboard</span></a><a href="users.html" data-page="users">♙ <span>Manajemen Akun</span></a><a href="reports.html" data-page="reports">▤ <span>Manajemen Laporan</span></a><a href="permissions.html" data-page="permissions">⬡ <span>Hak Akses</span></a><a href="audit-log.html" data-page="audit">◷ <span>Audit Log</span></a><a href="system.html" data-page="system">▧ <span>Database & Sistem</span></a><a href="settings.html" data-page="settings">⚙ <span>Pengaturan</span></a></nav><div class="side-bottom"><a href="../../pages/dashboard.html">← Kembali ke Aplikasi</a><small>POLDA BANTEN · BAGPSI</small></div></aside><main class="main"><header class="topbar"><button id="menu-toggle" class="mobile-menu" type="button">☰</button><div><small>ADMIN PANEL / <span id="crumb">DASHBOARD</span></small><h1 id="page-title">Dashboard Admin</h1></div><div class="profile"><span class="crown">♛</span><span><b>Administrator</b><small id="account-email">Memeriksa sesi…</small></span><button id="logout" class="btn light" type="button">Keluar</button></div></header><section id="content" class="content"><div class="loading">Memeriksa sesi dan hak akses administrator…</div></section><div id="toast" class="toast"></div></main></div><script type="module" src="../../js/admin/admin.js"></script></body></html>
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#102b4c">
+  <title>Manajemen Akun — BAGPSI REPORT</title>
+  <link rel="icon" href="../../assets/PSI.png" type="image/png">
+  <link rel="stylesheet" href="../../css/admin/admin.css">
+  <link rel="stylesheet" href="../../css/admin/users.css">
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-mark">✦</div><div><b>BAGPSI REPORT</b><small>ADMIN CONTROL PANEL</small></div></div>
+    <nav id="admin-nav">
+      <a href="index.html" data-page="dashboard">▦ <span>Dashboard</span></a>
+      <a href="users.html" data-page="users">♙ <span>Manajemen Akun</span></a>
+      <a href="reports.html" data-page="reports">▤ <span>Manajemen Laporan</span></a>
+      <a href="permissions.html" data-page="permissions">⬡ <span>Hak Akses</span></a>
+      <a href="audit-log.html" data-page="audit">◷ <span>Audit Log</span></a>
+      <a href="system.html" data-page="system">▧ <span>Database & Sistem</span></a>
+      <a href="settings.html" data-page="settings">⚙ <span>Pengaturan</span></a>
+    </nav>
+    <div class="side-bottom"><a href="../../pages/dashboard.html">← Kembali ke Aplikasi</a><small>POLDA BANTEN · BAGPSI</small></div>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <button id="menu-toggle" class="mobile-menu" type="button" aria-label="Buka menu">☰</button>
+      <div><small>ADMIN PANEL / MANAJEMEN AKUN</small><h1>Manajemen Akun</h1></div>
+      <div class="profile"><span class="crown">♛</span><span><b>Administrator</b><small id="account-email">Memeriksa sesi…</small></span><button id="logout" class="btn light" type="button">Keluar</button></div>
+    </header>
+    <section class="content users-content">
+      <div class="section-head users-heading">
+        <div><h2>Manajemen Akun</h2><p class="muted">Kelola akun pengguna, status akses, dan peran aplikasi BAGPSI REPORT.</p></div>
+        <button class="btn" id="add-user-btn" type="button">＋ Tambah Akun</button>
+      </div>
+
+      <div class="grid user-stats">
+        <article class="card user-stat"><span class="stat-icon">♙</span><div><small>Total Akun</small><strong id="total-count">—</strong></div></article>
+        <article class="card user-stat"><span class="stat-icon gold">♛</span><div><small>Admin</small><strong id="admin-count">—</strong></div></article>
+        <article class="card user-stat"><span class="stat-icon">♟</span><div><small>User</small><strong id="user-count">—</strong></div></article>
+        <article class="card user-stat"><span class="stat-icon red">⊗</span><div><small>Akun Nonaktif</small><strong id="inactive-count">—</strong></div></article>
+      </div>
+
+      <section class="card account-card">
+        <div class="toolbar account-toolbar">
+          <input class="input search-input" id="search-users" type="search" placeholder="Cari nama atau email…" autocomplete="off">
+          <select id="filter-role" aria-label="Filter role"><option value="">Semua Role</option><option value="admin">Admin</option><option value="user">User</option></select>
+          <select id="filter-status" aria-label="Filter status"><option value="">Semua Status</option><option value="active">Aktif</option><option value="inactive">Nonaktif</option></select>
+          <button class="btn light" id="refresh-users" type="button" title="Muat ulang">↻</button>
+        </div>
+        <div class="table-wrap">
+          <table class="accounts-table">
+            <thead><tr><th>Nama Pengguna</th><th>Email</th><th>Role</th><th>Status</th><th>Dibuat</th><th>Aksi</th></tr></thead>
+            <tbody id="users-table-body"><tr><td colspan="6" class="empty">Memuat data akun…</td></tr></tbody>
+          </table>
+        </div>
+        <div class="table-footer"><span id="result-count">Memuat akun…</span><div class="pagination"><button class="btn light" id="prev-page" type="button">‹</button><span id="page-label">1</span><button class="btn light" id="next-page" type="button">›</button></div></div>
+      </section>
+      <div class="notice" id="users-notice">Pengelolaan akun menggunakan layanan server. Password sementara hanya digunakan saat pembuatan akun dan tidak disimpan dalam tabel profil.</div>
+    </section>
+
+    <div id="user-drawer-backdrop" class="drawer-backdrop" hidden></div>
+    <aside id="user-drawer" class="user-drawer" aria-hidden="true" aria-labelledby="drawer-title">
+      <div class="drawer-head"><div><h2 id="drawer-title">Tambah Akun</h2><p class="muted" id="drawer-subtitle">Buat akun pengguna baru BAGPSI REPORT.</p></div><button id="close-drawer" class="icon-btn" type="button" aria-label="Tutup">×</button></div>
+      <form id="create-user-form">
+        <label>Nama Lengkap <span>*</span><input class="input" id="new-name" maxlength="120" required placeholder="Masukkan nama lengkap"></label>
+        <label>Email <span>*</span><input class="input" id="new-email" type="email" maxlength="254" required placeholder="nama@contoh.go.id"></label>
+        <label>Role <span>*</span><select id="new-role" required><option value="user">User</option><option value="admin">Admin</option></select></label>
+        <label>Password Sementara <span>*</span><div class="password-wrap"><input class="input" id="new-password" type="password" minlength="12" autocomplete="new-password" required placeholder="Minimal 12 karakter"><button id="toggle-password" type="button" class="icon-btn" aria-label="Tampilkan password">◉</button></div><small>Minimal 12 karakter. Kombinasikan huruf besar, huruf kecil, angka, dan simbol. Sampaikan password melalui kanal terpisah yang aman.</small></label>
+        <div class="notice">Password sementara tidak akan ditampilkan kembali setelah akun dibuat. Pengguna disarankan segera mengganti password setelah berhasil masuk.</div>
+        <div class="drawer-actions"><button class="btn light" id="cancel-create" type="button">Batal</button><button class="btn" id="submit-create" type="submit">Buat Akun</button></div>
+      </form>
+      <div class="drawer-security">♢ &nbsp; Pembuatan akun diproses melalui layanan server yang aman.</div>
+    </aside>
+
+    <div id="confirm-modal" class="modal-backdrop" hidden>
+      <section class="modal confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+        <h2 id="confirm-title">Konfirmasi perubahan</h2><p id="confirm-message"></p>
+        <div class="drawer-actions"><button id="confirm-cancel" class="btn light" type="button">Batal</button><button id="confirm-yes" class="btn" type="button">Ya, lanjutkan</button></div>
+      </section>
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </main>
+</div>
+<script type="module" src="../../js/admin/admin.js"></script>
+</body>
+</html>
