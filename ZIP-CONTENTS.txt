@@ -1,0 +1,10 @@
+BAGPSI ADMIN PANEL — FOUNDATION v0.1
+
+pages/admin/       7 HTML pages
+js/admin/          shared admin controller
+css/admin/         responsive admin styling
+supabase/          reserved for reviewed migrations/functions (not auto-applied)
+docs/              visual mockup, security design, implementation plan
+README-INSTALASI.md installation notes and verification limitations
+
+This ZIP is an additive admin-panel foundation, not a replacement for the entire BAGPSI REPORT application.
