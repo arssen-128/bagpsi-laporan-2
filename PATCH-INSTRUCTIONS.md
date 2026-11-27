@@ -1,30 +1,30 @@
-# RECOVERY PATCH — BAGPSI ROOT LOGIN + ADMIN PANEL
+# BAGPSI Admin Entry & Routing Fix v0.5
 
-## Tujuan
-Mengembalikan `index.html` root ke halaman login BAGPSI dan menempatkan Admin Panel pada URL terpisah. Patch ini mengikuti struktur modular yang didokumentasikan repository: `js/services/supabase.js`, `js/core/auth-guard.js`, `js/pages/login.js`.
+## Opsi B yang diterapkan
+- Login Admin dan User tetap melalui `index.html`.
+- Setelah login, keduanya tetap diarahkan ke `pages/dashboard.html`.
+- Shortcut `Ctrl + Shift + Alt + P` dipasang dari `requireSession()` pada halaman aplikasi yang sudah login.
+- Shortcut memanggil RPC `is_bagpsi_admin()`. Hanya jika hasilnya `true`, browser diarahkan ke `pages/admin/index.html`.
+- Halaman Admin dan seluruh subhalaman memeriksa session dan RPC lagi.
+- Membuka URL Admin secara langsung tanpa marker sesi shortcut akan diarahkan kembali ke Dashboard User.
+- Logout dari Admin menghapus marker dan mengakhiri Supabase session.
 
-## File dalam ZIP
-- `index.html`: salinan halaman login yang tercatat di branch main.
-- `pages/admin/index.html` dan `pages/admin/admin.css`: halaman Admin terpisah dengan path asset yang benar.
-- `js/admin/admin.js`: validasi session + `profiles.role`, lalu query statistik.
-- `js/admin/admin-shortcut.js`: handler shortcut; perlu dihubungkan dari auth guard.
-- `PATCH-INSTRUCTIONS.md`: petunjuk integrasi.
+## File yang diganti/ditambahkan
+- `js/core/auth-guard.js` (replace)
+- `js/admin/admin-shortcut.js` (replace)
+- `js/admin/admin-guard.js` (new)
+- `js/admin/admin.js` (replace)
+- `pages/admin/index.html` (replace; sekarang memakai shell yang sama dengan subhalaman)
+- `pages/admin/users.html`, `reports.html`, `permissions.html`, `audit-log.html`, `system.html`, `settings.html` (normalisasi active navigation dan button type)
 
-## Langkah pemulihan
-1. Download ZIP, ekstrak.
-2. Dari folder hasil ekstrak, upload/ganti `index.html` ke ROOT repository. Ini mengembalikan halaman login.
-3. Upload folder `pages/admin/` dan `js/admin/` ke root repository, jangan upload folder pembungkus ZIP.
-4. Pada file `js/core/auth-guard.js` (sesuaikan lokasi persis yang ada di repository), tambahkan import:
-   `import { installAdminShortcut } from "../admin/admin-shortcut.js";`
-   Di akhir alur `requireSession()` setelah sesi terverifikasi, panggil `installAdminShortcut();`.
-5. Commit ke branch `main`.
-6. Buka `https://arssen-128.github.io/bagpsi-laporan-2/` untuk login.
-7. Admin Panel ada di `https://arssen-128.github.io/bagpsi-laporan-2/pages/admin/index.html`.
+## Cara memasang
+Ekstrak ZIP, lalu gabungkan isi folder ke root repository `bagpsi-laporan-2`, pertahankan struktur direktori. Commit ke branch `main`.
 
-## Pemeriksaan sebelum push
-- Pastikan file client Supabase benar-benar berada di `js/services/supabase.js`, sesuai struktur README. `admin.js` mengimpor path tersebut.
-- Pastikan `profiles` memiliki row untuk akun Admin dengan `role='admin'`.
-- Jika statistik gagal dimuat tetapi halaman tampil, cek RLS SELECT untuk `profiles` dan `laporan_cloud`.
-
-## Batasan keamanan
-Shortcut bukan otorisasi; halaman memeriksa ulang session dan role. Operasi buat akun, ubah role, disable, reset password, delete/finalize report, dan ubah template tidak disediakan dalam patch ini. Jangan menaruh service_role key di browser. Operasi sensitif memerlukan Edge Function/secure RPC, RLS, dan audit log append-only.
+## Catatan penting
+1. `js/pages/login.js` sengaja tidak diubah. Login tetap menuju Dashboard User untuk semua role, sesuai Opsi B.
+2. Shortcut menggunakan RPC `is_bagpsi_admin()` yang sudah dipanggil oleh modul Master Personel dan disebut dalam dokumentasi proyek. Jika RPC belum tersedia atau error, akses Admin ditolak (fail closed).
+3. Marker `sessionStorage` hanya mengatur jalur masuk UX sesuai Opsi B. Otorisasi sebenarnya tetap dilakukan ulang melalui RPC pada setiap halaman Admin.
+4. Dashboard Admin membaca hitungan dari `profiles` dan `laporan_cloud`. Jika RLS tidak mengizinkan SELECT, angka ditampilkan sebagai `—` dan pesan error akan menjelaskan bahwa query/RLS perlu diperiksa.
+5. Modul akun, perubahan role, disable, reset password, perubahan template, penghapusan/finalisasi, dan audit log tidak diaktifkan dalam patch ini. Skema database dan Edge Functions untuk operasi tersebut belum diaudit.
+6. Tidak ada SQL migration dan tidak ada perubahan pada dashboard User atau stylesheet dashboard.
+7. Jangan menghapus file JavaScript duplikat di root pada pemasangan ini. File root tidak menjadi entry point halaman modular yang digunakan, tetapi penghapusan dilakukan terpisah setelah pemeriksaan dependensi lengkap.

@@ -1,36 +1,48 @@
-import { getSupabase } from "../services/supabase.js";
+const ENTRY_KEY = "bagpsi.admin.entry";
+let installed = false;
+let opening = false;
 
-let openingAdmin = false;
-export function installAdminShortcut() {
-  if (window.__bagpsiAdminShortcutInstalled) return;
-  window.__bagpsiAdminShortcutInstalled = true;
+export function installAdminShortcut(client) {
+  if (installed || !client) return;
+  installed = true;
 
-  document.addEventListener("keydown", async (event) => {
-    if (!(event.ctrlKey && event.shiftKey && event.altKey && event.key.toLowerCase() === "p")) return;
+  document.addEventListener("keydown", async event => {
+    const key = (event.key || "").toLowerCase();
+    const target = event.target;
+    const typing = target instanceof HTMLElement &&
+      (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName));
+
+    if (!(event.ctrlKey && event.shiftKey && event.altKey && key === "p")) return;
+    if (typing || event.repeat) return;
+
     event.preventDefault();
-    if (openingAdmin) return;
-    openingAdmin = true;
+    if (opening) return;
+    opening = true;
+
     try {
-      const client = getSupabase();
-      const { data, error } = await client.auth.getSession();
-      if (error) throw error;
-      if (!data.session) {
-        alert("Silakan login terlebih dahulu.");
+      const { data: sessionData, error: sessionError } = await client.auth.getSession();
+      if (sessionError) throw sessionError;
+      if (!sessionData?.session) {
+        alert("Sesi login tidak ditemukan. Silakan login kembali.");
         return;
       }
-      const { data: profile, error: profileError } = await client
-        .from("profiles").select("role").eq("id", data.session.user.id).maybeSingle();
-      if (profileError) throw profileError;
-      if (profile?.role !== "admin") {
-        alert("Akses ditolak. Akun ini tidak memiliki role Admin.");
+
+      // Database RPC is the authority for Admin status.
+      const { data: isAdmin, error: roleError } = await client.rpc("is_bagpsi_admin");
+      if (roleError) throw roleError;
+      if (isAdmin !== true) {
+        alert("Akses ditolak. Shortcut Admin hanya tersedia untuk akun Administrator.");
         return;
       }
-      location.href = new URL("../../pages/admin/index.html", import.meta.url).href;
+
+      // UX entry marker: Admin pages still re-check session and server role.
+      sessionStorage.setItem(ENTRY_KEY, "1");
+      window.location.assign(new URL("./admin/index.html", window.location.href).href);
     } catch (error) {
-      console.error("[Admin shortcut]", error);
-      alert(`Admin Panel gagal dibuka: ${error.message || error}`);
+      console.error("[BAGPSI Admin Shortcut]", error);
+      alert(`Verifikasi Admin gagal: ${error.message || "Periksa koneksi dan RPC is_bagpsi_admin."}`);
     } finally {
-      openingAdmin = false;
+      opening = false;
     }
   });
 }
