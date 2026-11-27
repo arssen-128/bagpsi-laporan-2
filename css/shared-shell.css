@@ -1,0 +1,93 @@
+
+/* BAGPSI REPORT — shared user shell, v1.0
+   Additive visual layer. Existing page/module styles and JS behavior are preserved. */
+.app-page.dashboard-page {
+  --shell-navy:#102b4c; --shell-gold:#d6aa47; --shell-bg:#f2f6fc;
+  background:var(--shell-bg); color:#142b4d;
+}
+.app-page.dashboard-page .dashboard-sidebar {
+  position:fixed !important; inset:0 auto 0 0; width:258px; height:100vh;
+  min-height:100vh; overflow:hidden; z-index:30;
+  padding:22px 17px; display:flex; flex-direction:column;
+  background:linear-gradient(180deg,#102b4c 0%,#0c2442 72%,#102b4c 100%);
+}
+.app-page.dashboard-page .dashboard-sidebar:before {
+  content:""; position:absolute; inset:auto 0 0; height:38%;
+  background:linear-gradient(180deg,#102b4c 0%,rgba(16,43,76,.45) 28%,rgba(7,23,43,.25) 100%),url('../assets/sidebar-konseling.jpeg') center bottom/cover no-repeat;
+  z-index:0; opacity:.88; pointer-events:none;
+}
+.app-page.dashboard-page .dashboard-sidebar > * { position:relative; z-index:1; }
+.app-page.dashboard-page .dashboard-sidebar .sidebar-photo { display:none; }
+.app-page.dashboard-page .dashboard-sidebar .brand { color:#fff; padding:0 6px 22px; border-bottom:1px solid #ffffff22; }
+.app-page.dashboard-page .dashboard-sidebar .brand img { width:48px;height:48px;object-fit:contain;border-radius:50%;background:#fff; }
+.app-page.dashboard-page .dashboard-sidebar .brand b { font-size:14px; }
+.app-page.dashboard-page .dashboard-sidebar .brand small { color:#b6c9df; }
+.app-page.dashboard-page .dashboard-sidebar .nav-caption { color:#b9c9dd; }
+.app-page.dashboard-page .dashboard-sidebar .nav-link { color:#e9f1fb; border-radius:10px; margin:4px 0; transition:background .18s,border-color .18s; }
+.app-page.dashboard-page .dashboard-sidebar .nav-link:hover { background:#ffffff14; }
+.app-page.dashboard-page .dashboard-sidebar .nav-link.active { background:linear-gradient(100deg,#b88b2b55,#ffffff18); border:1px solid #d5ac4c; color:#fff; box-shadow:inset 3px 0 #e5bd59; }
+.app-page.dashboard-page .dashboard-sidebar .sidebar-foot { margin-top:auto; background:#0b2340aa; border-top:1px solid #ffffff22; color:#e8f1fc; }
+.app-page.dashboard-page .app-main { margin-left:258px; min-width:0; min-height:100vh; }
+.app-page.dashboard-page .dashboard-hero {
+  min-height:136px; position:relative; display:flex; align-items:center; justify-content:space-between;
+  gap:24px; padding:24px 32px; color:#fff;
+  background:#102b4c url('../assets/polda-banten-header.png') center 48%/cover no-repeat;
+  overflow:hidden; border-bottom:0;
+}
+.app-page.dashboard-page .dashboard-hero:before { content:""; position:absolute; inset:0; background:linear-gradient(90deg,rgba(11,35,64,.96) 0%,rgba(13,43,78,.83) 35%,rgba(13,43,78,.43) 68%,rgba(9,31,57,.76) 100%); pointer-events:none; }
+.app-page.dashboard-page .dashboard-hero:after { content:""; position:absolute; left:0;right:0;bottom:0;height:4px;background:linear-gradient(90deg,#b68b32,#f2d17c,#b68b32); }
+.app-page.dashboard-page .dashboard-hero > * { position:relative; z-index:1; }
+.app-page.dashboard-page .hero-title { padding-left:15px; border-left:4px solid #d4a63e; }
+.app-page.dashboard-page .hero-kicker { font-size:10px; letter-spacing:.16em; font-weight:800; color:#dce8f8; }
+.app-page.dashboard-page .hero-title h1 { font-size:clamp(25px,3vw,34px);line-height:1.05;margin:5px 0 4px;letter-spacing:.02em;color:#fff; }
+.app-page.dashboard-page .hero-title h1 em { font-style:normal;color:#f1c65e; }
+.app-page.dashboard-page .hero-title p { font-size:12px;letter-spacing:.08em;margin:0;color:#e0eaf7; }
+.app-page.dashboard-page .hero-account { display:flex;align-items:center;gap:10px; }
+.app-page.dashboard-page .account-pill { display:grid;gap:3px;margin-right:10px;max-width:245px; }
+.app-page.dashboard-page .account-pill small { font-size:9px;letter-spacing:.13em;color:#c6d7eb; }
+.app-page.dashboard-page .account-pill strong { font-size:12px;overflow-wrap:anywhere;color:#fff; }
+.app-page.dashboard-page .account-pill span { font-size:10px;color:#a9e4c3; }
+.app-page.dashboard-page .hero-primary { background:#d6aa47;border-color:#e7c66e;color:#142c4b; }
+.app-page.dashboard-page .hero-logout { background:#ffffff15;border-color:#ffffff55;color:#fff; }
+.app-page.dashboard-page .hero-menu { display:none; }
+.app-page.dashboard-page .page-content { max-width:1800px;margin:0 auto;padding:24px 26px 18px; }
+.app-page.dashboard-page .page-title { margin:0 0 20px; }
+.app-page.dashboard-page .page-title h1 { color:#102b4c;font-size:25px; }
+.app-page.dashboard-page .page-title p:last-child { margin:0; }
+@media(max-width:900px) {
+ .app-page.dashboard-page .dashboard-hero { padding:20px;min-height:126px; }
+ .app-page.dashboard-page .account-pill { display:none; }
+ .app-page.dashboard-page .page-content { padding:20px 16px; }
+}
+@media(max-width:760px) {
+ .app-page.dashboard-page .dashboard-sidebar { width:258px;height:100dvh;min-height:100dvh;transform:translateX(-105%);transition:transform .2s ease; }
+ .app-page.dashboard-page .app-frame.menu-open .dashboard-sidebar { transform:translateX(0); }
+ .app-page.dashboard-page .app-main { margin-left:0; }
+}
+@media(max-width:650px) {
+ .app-page.dashboard-page .dashboard-hero { align-items:flex-start;min-height:150px;padding:18px 14px;flex-wrap:wrap; }
+ .app-page.dashboard-page .hero-menu { display:inline-flex;position:absolute;right:14px;top:14px; }
+ .app-page.dashboard-page .hero-title { max-width:calc(100% - 45px);margin-top:30px; }
+ .app-page.dashboard-page .hero-title h1 { font-size:25px; }
+ .app-page.dashboard-page .hero-account { width:100%;justify-content:flex-start; }
+ .app-page.dashboard-page .hero-account .btn { min-height:35px;padding:7px 10px;font-size:10px; }
+}
+
+/* Admin shell shares the same navy/gold/light visual language. */
+body:has(.admin-sidebar), body:has(.layout > .sidebar) { background:#f2f6fc; }
+.admin-sidebar, .layout > .sidebar {
+  background:linear-gradient(180deg,#102b4c 0%,#0c2442 72%,#102b4c 100%) !important;
+  color:#fff;
+}
+.admin-sidebar nav a:hover,.admin-sidebar nav a.active,
+.layout > .sidebar nav a:hover,.layout > .sidebar nav a.active {
+  background:linear-gradient(100deg,#b88b2b55,#ffffff18) !important;
+  box-shadow:inset 3px 0 #e5bd59 !important;
+}
+.admin-main .topbar, .layout > .main > .topbar {
+  background:#fff; border-bottom:1px solid #e1e9f3;
+}
+.admin-main, .layout > .main { background:#f2f6fc; }
+.admin-main .panel,.layout .card,.layout .content > .card {
+  border-color:#e1e9f3; border-radius:15px; box-shadow:0 5px 18px #173b6409;
+}

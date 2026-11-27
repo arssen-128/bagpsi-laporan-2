@@ -3,20 +3,25 @@
 <meta name="theme-color" content="#102b4c"><title>Pratinjau Teks — BAGPSI REPORT</title>
 <link rel="icon" href="../assets/PSI.png" type="image/png">
 <link rel="stylesheet" href="../css/base.css"><link rel="stylesheet" href="../css/app.css">
+<link rel="stylesheet" href="../css/dashboard.css">
+<link rel="stylesheet" href="../css/dashboard-layout-fix.css">
+<link rel="stylesheet" href="../css/shared-shell.css">
 <script type="module" src="../js/pages/preview.js"></script></head>
-<body class="app-page">
+<body class="app-page dashboard-page">
 <div class="app-frame">
-  <aside class="sidebar" id="sidebar">
+  <aside class="sidebar dashboard-sidebar" id="sidebar">
     <a class="brand" href="./dashboard.html"><img src="../assets/PSI.png" alt=""><span><b>BAGPSI REPORT</b><small>RO SDM POLDA BANTEN</small></span></a>
     <p class="nav-caption">MENU UTAMA</p><nav class="nav-list"><a class="nav-link " href="./dashboard.html"><span>▦</span>Dashboard</a><a class="nav-link " href="./buat-laporan.html"><span>▤</span>Buat laporan</a><a class="nav-link" href="./karopsi-builder.html"><span>▧</span>Kompilasi KAROPSI</a><a class="nav-link " href="./laporan-tersimpan.html"><span>▣</span>Laporan tersimpan</a><a class="nav-link active" href="./pratinjau.html"><span>≡</span>Pratinjau teks</a><a class="nav-link " href="./master-personel.html"><span>♟</span>Master personel</a></nav>
+    <div class="sidebar-photo" aria-hidden="true"></div>
     <div class="sidebar-foot"><i></i> Terhubung ke BAGPSI REPORT</div>
   </aside>
   <div class="app-main">
-    <header class="topbar">
-      <button class="menu-toggle" id="menu-toggle" aria-label="Buka menu" aria-expanded="false">☰</button>
-      <div class="account"><small>AKUN AKTIF</small><strong id="account-email">Memeriksa sesi…</strong><span id="sync-status">Menghubungkan…</span></div>
-      <div class="top-actions"><a class="btn primary-soft" href="./buat-laporan.html">＋ Laporan baru</a><button class="btn quiet" id="logout-button" type="button">Keluar</button></div>
-    </header>
+    <header class="dashboard-hero">
+<button class="menu-toggle hero-menu" id="menu-toggle" aria-label="Buka menu" aria-expanded="false">☰</button>
+      <div class="account-pill"><small>AKUN AKTIF</small><strong id="account-email">Memeriksa sesi…</strong><span id="sync-status">Menghubungkan…</span></div>
+      <div class="hero-account"><a class="btn hero-primary" href="./buat-laporan.html">＋ Laporan baru</a><button class="btn hero-logout" id="logout-button" type="button">Keluar</button></div>
+<div class="hero-title"><span class="hero-kicker">SISTEM PENGELOLAAN LAPORAN KEGIATAN</span><h1>BAGPSI <em>REPORT</em></h1><p>PRATINJAU TEKS · BAGPSI RO SDM POLDA BANTEN</p></div>
+</header>
     <main class="page-content">
       <header class="page-title"><div><p class="eyebrow">BAGPSI RO SDM POLDA BANTEN</p><h1>Pratinjau Teks</h1><p class="muted">Periksa dan salin format laporan yang sedang dikerjakan.</p></div></header>
       

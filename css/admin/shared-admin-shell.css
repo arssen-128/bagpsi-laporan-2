@@ -1,0 +1,47 @@
+
+/* BAGPSI REPORT — admin shared visual system v1.0 */
+:root { --bagpsi-navy:#102b4c; --bagpsi-gold:#d6aa47; --bagpsi-bg:#f2f6fc; --bagpsi-line:#e1e9f3; }
+body { background:var(--bagpsi-bg) !important; color:#18324f; }
+.layout > .sidebar {
+  width:258px !important; padding:22px 17px !important;
+  background:linear-gradient(180deg,#102b4c 0%,#0c2442 72%,#102b4c 100%) !important;
+  box-shadow:none !important;
+}
+.layout > .sidebar .brand { padding:0 6px 22px !important; border-bottom:1px solid #ffffff22 !important; }
+.layout > .sidebar .brand-mark {
+  width:46px;height:46px;display:grid;place-items:center;border:2px solid #d6aa47;
+  border-radius:50%;background:#ffffff0b;color:#f1c65e;font-size:22px;
+}
+.layout > .sidebar .brand b { color:#fff !important;font-size:14px !important; }
+.layout > .sidebar .brand small { color:#b6c9df !important; }
+.layout > .sidebar nav { gap:5px !important; margin-top:25px !important; }
+.layout > .sidebar nav a { min-height:42px;display:flex;align-items:center;gap:9px;padding:0 12px !important;border-radius:10px !important;color:#e9f1fb !important; }
+.layout > .sidebar nav a.active { border:1px solid #d5ac4c; }
+.layout > .sidebar .side-bottom { margin-top:auto !important;padding:16px 7px 4px !important;border-top:1px solid #ffffff22 !important; }
+.layout > .sidebar .side-bottom a { color:#e8f1fc !important; }
+.layout > .main { margin-left:258px !important;min-width:0;background:#f2f6fc !important; }
+.layout > .main > .topbar {
+  min-height:112px;position:sticky;top:0;z-index:20;
+  padding:20px 28px !important;display:flex;align-items:center;gap:18px;
+  background:#102b4c url('../../assets/polda-banten-header.png') center 48%/cover no-repeat !important;
+  color:#fff;border:0 !important;box-shadow:0 3px 0 #d6aa47;
+}
+.layout > .main > .topbar:before { content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(11,35,64,.96),rgba(13,43,78,.70) 58%,rgba(9,31,57,.82));pointer-events:none; }
+.layout > .main > .topbar > * { position:relative;z-index:1; }
+.layout > .main > .topbar > div:first-of-type { border-left:4px solid #d6aa47;padding-left:14px; }
+.layout > .main > .topbar small { color:#dce8f8 !important; }
+.layout > .main > .topbar h1 { color:#fff !important;font-size:26px !important; }
+.layout > .main > .topbar .profile { color:#fff; }
+.layout > .main > .topbar .profile small { color:#dce8f8 !important; }
+.layout > .main > .topbar .btn.light { background:#ffffff18;color:#fff;border-color:#ffffff55; }
+.layout > .main > .content { max-width:1800px;margin:0 auto;padding:24px 26px !important; }
+.layout > .main .card,.layout > .main .panel,.layout > .main .account-card {
+  border:1px solid #e1e9f3;border-radius:15px;box-shadow:0 5px 18px #173b6409;
+}
+@media(max-width:760px) {
+ .layout > .sidebar { width:258px !important;transform:translateX(-105%);transition:transform .2s ease;z-index:40; }
+ .layout.menu-open > .sidebar { transform:translateX(0); }
+ .layout > .main { margin-left:0 !important; }
+ .layout > .main > .topbar { min-height:100px;padding:16px !important; }
+ .layout > .main > .content { padding:18px 14px !important; }
+}
