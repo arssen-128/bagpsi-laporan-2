@@ -1,0 +1,43 @@
+/*
+ * BAGPSI REPORT — Dashboard layout hotfix
+ * Root cause: dashboard.css overrides .sidebar { position: fixed }
+ * with .dashboard-sidebar { position: relative }, returning the sidebar
+ * to normal document flow and pushing .app-main below it.
+ */
+.dashboard-page .dashboard-sidebar {
+  position: fixed !important;
+  inset: 0 auto 0 0;
+  width: 258px;
+  height: 100vh;
+  min-height: 100vh;
+  overflow: hidden;
+  z-index: 30;
+}
+
+/* Keep main content aligned beside the fixed sidebar. */
+.dashboard-page .app-main {
+  margin-left: 258px;
+  min-width: 0;
+  min-height: 100vh;
+}
+
+/* Preserve the existing slide-in mobile navigation behavior. */
+@media (max-width: 760px) {
+  .dashboard-page .dashboard-sidebar {
+    position: fixed !important;
+    inset: 0 auto 0 0;
+    width: 258px;
+    height: 100dvh;
+    min-height: 100dvh;
+    transform: translateX(-105%);
+    transition: transform .2s ease;
+  }
+
+  .dashboard-page .app-frame.menu-open .dashboard-sidebar {
+    transform: translateX(0);
+  }
+
+  .dashboard-page .app-main {
+    margin-left: 0;
+  }
+}
