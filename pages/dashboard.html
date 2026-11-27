@@ -1,41 +1,108 @@
 <!doctype html>
-<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#102b4c"><title>Dashboard — BAGPSI REPORT</title>
-<link rel="icon" href="../assets/logo-placeholder.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../css/base.css"><link rel="stylesheet" href="../css/app.css">
-<script type="module" src="../js/pages/dashboard.js"></script></head>
-<body class="app-page">
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102b4c">
+  <title>Dashboard — BAGPSI REPORT</title>
+  <link rel="icon" href="../assets/PSI.png" type="image/png">
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/app.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <script type="module" src="../js/pages/dashboard.js"></script>
+</head>
+<body class="app-page dashboard-page">
 <div class="app-frame">
-  <aside class="sidebar" id="sidebar">
-    <a class="brand" href="./dashboard.html"><img src="../assets/logo-placeholder.svg" alt=""><span><b>BAGPSI REPORT</b><small>RO SDM POLDA BANTEN</small></span></a>
-    <p class="nav-caption">MENU UTAMA</p><nav class="nav-list"><a class="nav-link active" href="./dashboard.html"><span>▦</span>Dashboard</a><a class="nav-link " href="./buat-laporan.html"><span>▤</span>Buat laporan</a><a class="nav-link " href="./laporan-tersimpan.html"><span>▣</span>Laporan tersimpan</a><a class="nav-link " href="./pratinjau.html"><span>≡</span>Pratinjau teks</a><a class="nav-link " href="./master-personel.html"><span>♟</span>Master personel</a></nav>
-    <div class="sidebar-foot"><i></i> Terhubung ke BAGPSI REPORT</div>
+  <aside class="sidebar dashboard-sidebar" id="sidebar">
+    <a class="brand" href="./dashboard.html"><img src="../assets/PSI.png" alt="Logo PSI"><span><b>BAGPSI REPORT</b><small>RO SDM POLDA BANTEN</small></span></a>
+    <p class="nav-caption">MENU UTAMA</p>
+    <nav class="nav-list">
+      <a class="nav-link active" href="./dashboard.html"><span>⌂</span>Dashboard</a>
+      <a class="nav-link" href="./buat-laporan.html"><span>＋</span>Buat laporan</a>
+      <a class="nav-link" href="./laporan-tersimpan.html"><span>▣</span>Laporan tersimpan</a>
+      <a class="nav-link" href="./pratinjau.html"><span>≡</span>Pratinjau teks</a>
+      <a class="nav-link" href="./master-personel.html"><span>♟</span>Master personel</a>
+    </nav>
+    <div class="sidebar-photo" aria-hidden="true"></div>
+    <div class="sidebar-foot" id="sidebar-connection"><i></i><span>Memeriksa koneksi…</span></div>
   </aside>
-  <div class="app-main">
-    <header class="topbar">
-      <button class="menu-toggle" id="menu-toggle" aria-label="Buka menu" aria-expanded="false">☰</button>
-      <div class="account"><small>AKUN AKTIF</small><strong id="account-email">Memeriksa sesi…</strong><span id="sync-status">Menghubungkan…</span></div>
-      <div class="top-actions"><a class="btn primary-soft" href="./buat-laporan.html">＋ Laporan baru</a><button class="btn quiet" id="logout-button" type="button">Keluar</button></div>
-    </header>
-    <main class="page-content">
-      <header class="page-title"><div><p class="eyebrow">BAGPSI RO SDM POLDA BANTEN</p><h1>Dashboard</h1><p class="muted">Ringkasan ruang kerja dan akses cepat.</p></div></header>
-      
-<section class="stat-grid">
-  <article class="stat-card"><span>Total laporan terbaru</span><strong id="dash-total">—</strong><small>Data dari arsip online</small></article>
-  <article class="stat-card"><span>Laporan KARO SDM</span><strong id="dash-karo">—</strong><small>Dalam 100 data terbaru</small></article>
-  <article class="stat-card"><span>Laporan KAROPSI</span><strong id="dash-psi">—</strong><small>Dalam 100 data terbaru</small></article>
-</section>
-<section class="quick-grid">
-  <a class="quick-card" href="./buat-laporan.html"><b>＋ Buat laporan</b><span>Buat laporan kegiatan baru untuk KARO SDM atau KAROPSI.</span></a>
-  <a class="quick-card" href="./laporan-tersimpan.html"><b>▣ Laporan tersimpan</b><span>Cari, filter, dan buka kembali laporan dari database.</span></a>
-  <a class="quick-card" href="./pratinjau.html"><b>≡ Pratinjau teks</b><span>Lihat dan salin hasil format laporan.</span></a>
-  <a class="quick-card" href="./master-personel.html"><b>♟ Master personel</b><span>Kelola dan pilih data personel pelaksana.</span></a>
-</section>
-<section class="panel"><div class="panel-head"><div><span class="kicker">AKTIVITAS</span><h2>Laporan terakhir diperbarui</h2></div><a href="./laporan-tersimpan.html">Lihat semua →</a></div><div id="dashboard-recent" class="recent-list"><p class="muted">Memuat data…</p></div></section>
 
+  <div class="app-main">
+    <header class="dashboard-hero">
+      <div class="hero-shade"></div>
+      <button class="menu-toggle hero-menu" id="menu-toggle" aria-label="Buka menu" aria-expanded="false">☰</button>
+      <div class="hero-title">
+        <span class="hero-kicker">SISTEM PENGELOLAAN LAPORAN KEGIATAN</span>
+        <h1>BAGPSI <em>REPORT</em></h1>
+        <p>BAGPSI RO SDM POLDA BANTEN</p>
+      </div>
+      <div class="hero-account">
+        <div class="account-pill"><small>AKUN AKTIF</small><strong id="account-email">Memeriksa sesi…</strong><span id="sync-status">Menghubungkan…</span></div>
+        <a class="btn hero-primary" href="./buat-laporan.html">＋ Laporan baru</a>
+        <button class="btn hero-logout" id="logout-button" type="button">Keluar</button>
+      </div>
+    </header>
+
+    <main class="dashboard-content">
+      <section class="dashboard-welcome">
+        <div><p class="eyebrow">RUANG KENDALI BAGPSI</p><h2>Selamat bekerja.</h2><p class="muted">Pantau laporan, progres penyelesaian, dan aktivitas terbaru.</p></div>
+        <div class="today-chip"><span class="today-dot"></span><span id="today-label">Memuat tanggal…</span></div>
+      </section>
+
+      <section class="dashboard-stats" aria-label="Ringkasan laporan">
+        <article class="metric-card metric-total"><div class="metric-icon">▤</div><div><span>Total laporan</span><strong id="dash-total">—</strong><small>Data yang dapat Anda akses</small></div></article>
+        <article class="metric-card metric-draft"><div class="metric-icon">✎</div><div><span>Draft</span><strong id="dash-drafts">—</strong><small>Belum difinalisasi</small></div></article>
+        <article class="metric-card metric-final"><div class="metric-icon">✓</div><div><span>Final</span><strong id="dash-finals">—</strong><small>Sudah difinalisasi</small></div></article>
+        <article class="metric-card metric-month"><div class="metric-icon">▦</div><div><span>Laporan bulan ini</span><strong id="dash-month">—</strong><small>Berdasarkan terakhir diperbarui</small></div></article>
+        <article class="metric-card metric-psi"><div class="metric-icon">◈</div><div><span>Laporan KAROPSI</span><strong id="dash-psi">—</strong><small>Dalam arsip yang dapat diakses</small></div></article>
+      </section>
+
+      <section class="dashboard-main-grid">
+        <article class="dash-card trend-card">
+          <div class="dash-card-head"><div><span class="kicker">PERKEMBANGAN</span><h3>Tren laporan kegiatan</h3><p class="muted">Jumlah laporan berdasarkan waktu pembaruan.</p></div><div class="chart-legend"><span><i class="legend-final"></i>Final</span><span><i class="legend-draft"></i>Draft</span></div></div>
+          <div id="report-trend" class="trend-chart" aria-live="polite"><p class="muted">Memuat tren laporan…</p></div>
+        </article>
+        <article class="dash-card status-card">
+          <div class="watermark" aria-hidden="true"></div>
+          <div class="dash-card-head"><div><span class="kicker">KOMPOSISI</span><h3>Status laporan</h3></div></div>
+          <div class="status-content"><div class="donut" id="status-donut"><div><strong id="donut-total">—</strong><span>Laporan</span></div></div><div class="status-legend"><div><i class="legend-final"></i><span>Final</span><b id="legend-final-count">—</b></div><div><i class="legend-draft"></i><span>Draft</span><b id="legend-draft-count">—</b></div></div></div>
+          <p class="status-note">Ringkasan mengikuti hak akses akun yang sedang masuk.</p>
+        </article>
+        <article class="dash-card quick-card-panel">
+          <div class="dash-card-head"><div><span class="kicker">AKSES CEPAT</span><h3>Mulai dari sini</h3></div></div>
+          <div class="quick-actions">
+            <a href="./buat-laporan.html"><span>＋</span><b>Buat laporan</b><small>Catat kegiatan baru</small></a>
+            <a href="./laporan-tersimpan.html"><span>▣</span><b>Laporan tersimpan</b><small>Cari dan kelola arsip</small></a>
+            <a href="./master-personel.html"><span>♟</span><b>Master personel</b><small>Data pelaksana</small></a>
+            <a href="./pratinjau.html"><span>≡</span><b>Pratinjau teks</b><small>Lihat hasil laporan</small></a>
+          </div>
+        </article>
+      </section>
+
+      <section class="dashboard-bottom-grid">
+        <article class="dash-card recent-card">
+          <div class="dash-card-head"><div><span class="kicker">ARSIP TERBARU</span><h3>Laporan terakhir diperbarui</h3></div><a class="text-link" href="./laporan-tersimpan.html">Lihat semua →</a></div>
+          <div id="dashboard-recent" class="recent-table-wrap"><p class="muted">Memuat data…</p></div>
+        </article>
+        <div class="dash-side-stack">
+          <article class="dash-card template-card">
+            <div class="dash-card-head"><div><span class="kicker">JENIS LAPORAN</span><h3>Distribusi template</h3></div></div>
+            <div class="template-row"><div><span>KARO SDM</span><b id="dash-karo">—</b></div><div class="template-track"><i id="karo-track"></i></div></div>
+            <div class="template-row"><div><span>KAROPSI</span><b id="dash-psi-template">—</b></div><div class="template-track"><i id="psi-track"></i></div></div>
+          </article>
+          <article class="dash-card system-card">
+            <div class="dash-card-head"><div><span class="kicker">STATUS APLIKASI</span><h3>Informasi sistem</h3></div><span class="system-pulse" id="system-pulse"></span></div>
+            <div class="system-line"><span>Koneksi database</span><b id="db-state">Memeriksa…</b></div>
+            <div class="system-line"><span>Data terakhir dimuat</span><b id="last-loaded">—</b></div>
+            <div class="system-line"><span>Versi tampilan</span><b>Dashboard 2.0</b></div>
+          </article>
+        </div>
+      </section>
+      <footer class="dashboard-footer">SDM BERKEUNGGULAN <span>•</span> POLISI BERSAMA MASYARAKAT <span>•</span> INDONESIA MAJU</footer>
     </main>
   </div>
 </div>
 <div class="mobile-backdrop" id="mobile-backdrop"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-</body></html>
+</body>
+</html>
