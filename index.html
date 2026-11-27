@@ -1,23 +1,83 @@
 <!doctype html>
-<html lang="id"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#102b4c"><title>Masuk — BAGPSI REPORT</title>
-<link rel="icon" href="./assets/PSI.png" type="image/png">
-<link rel="stylesheet" href="./css/base.css"><link rel="stylesheet" href="./css/auth.css">
-<script type="module" src="./js/pages/login.js"></script>
-</head><body class="auth-page">
-<main class="auth-wrap">
-  <section class="auth-card">
-    <img class="auth-logo" src="./assets/PSI.png" alt="Logo BAGPSI">
-    <p class="eyebrow">RO SDM POLDA BANTEN</p>
-    <h1>BAGPSI REPORT</h1>
-    <p class="muted">Sistem pelaporan dan administrasi kegiatan BAGPSI.</p>
-    <form id="login-form">
-      <label for="email">Email</label><input id="email" type="email" autocomplete="username" required placeholder="nama@instansi.go.id">
-      <label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required placeholder="Masukkan password">
-      <button class="btn primary full" type="submit" id="login-submit">Masuk</button>
-      <p id="login-message" class="form-message" role="status" aria-live="polite"></p>
-    </form>
-  </section>
-  <footer>© BAGPSI RO SDM POLDA BANTEN</footer>
-</main></body></html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102b4c">
+  <title>Admin Control Panel — BAGPSI REPORT</title>
+  <link rel="icon" href="../../assets/PSI.png" type="image/png">
+  <link rel="stylesheet" href="../../css/base.css">
+  <link rel="stylesheet" href="./admin.css">
+  <script type="module" src="../../js/admin/admin.js"></script>
+</head>
+<body class="admin-page">
+  <aside class="admin-sidebar">
+    <a class="admin-brand" href="../dashboard.html">
+      <img src="../../assets/PSI.png" alt="">
+      <span><b>BAGPSI REPORT</b><small>ADMIN CONTROL PANEL</small></span>
+    </a>
+    <nav>
+      <a class="active" href="./index.html">▦ Dashboard Admin</a>
+      <a href="#accounts">♙ Manajemen Akun</a>
+      <a href="#reports">▤ Manajemen Laporan</a>
+      <a href="#access">⚿ Hak Akses</a>
+      <a href="#audit">◷ Audit Log</a>
+      <a href="#system">▣ Database & Sistem</a>
+      <a href="#settings">⚙ Pengaturan</a>
+    </nav>
+    <a class="back-link" href="../dashboard.html">← Kembali ke aplikasi</a>
+  </aside>
+
+  <main class="admin-main">
+    <header class="admin-topbar">
+      <div><small>ADMINISTRASI SISTEM</small><h1>Dashboard Admin</h1></div>
+      <div class="admin-user"><span id="admin-email">Memeriksa akun…</span><b>ADMIN</b></div>
+    </header>
+
+    <section class="welcome">
+      <div><h2>Selamat datang, Administrator</h2><p>Ringkasan awal BAGPSI REPORT dan kondisi data.</p></div>
+      <span class="secure-pill">Akses terverifikasi melalui profiles.role</span>
+    </section>
+
+    <section class="metric-grid">
+      <article><small>Total Pengguna</small><strong id="users-count">—</strong></article>
+      <article><small>Total Laporan</small><strong id="reports-count">—</strong></article>
+      <article><small>Draft</small><strong id="draft-count">—</strong></article>
+      <article><small>Final</small><strong id="final-count">—</strong></article>
+      <article><small>Akun Admin</small><strong id="admins-count">—</strong></article>
+    </section>
+
+    <section class="admin-grid">
+      <article class="admin-card" id="accounts">
+        <div class="card-head"><div><small>MODUL 01</small><h3>Manajemen Akun</h3></div><span class="state planned">Tahap berikutnya</span></div>
+        <p>Daftar akun, pembuatan akun, perubahan role, penonaktifan, dan reset password.</p>
+        <small class="note">Operasi Auth belum diaktifkan sebelum Edge Function dan audit log tersedia.</small>
+      </article>
+      <article class="admin-card" id="reports">
+        <div class="card-head"><div><small>MODUL 02</small><h3>Manajemen Laporan</h3></div><span class="state planned">Tahap berikutnya</span></div>
+        <p>Pemantauan laporan, filter Draft/Final, pemilik, dan perubahan template secara terkendali.</p>
+        <small class="note">Tidak mengubah jenis/template secara langsung pada database.</small>
+      </article>
+      <article class="admin-card" id="access">
+        <div class="card-head"><div><small>MODUL 03</small><h3>Hak Akses</h3></div><span class="state planned">Tahap berikutnya</span></div>
+        <p>Role aplikasi dibaca dari <code>public.profiles.role</code> dengan nilai <code>admin</code> atau <code>user</code>.</p>
+      </article>
+      <article class="admin-card" id="audit">
+        <div class="card-head"><div><small>MODUL 04</small><h3>Audit Log</h3></div><span class="state blocked">Menunggu tabel</span></div>
+        <p>Riwayat login, perubahan role, finalisasi, penghapusan, dan tindakan administratif.</p>
+        <small class="note">Skema yang diberikan belum memuat tabel audit log.</small>
+      </article>
+      <article class="admin-card" id="system">
+        <div class="card-head"><div><small>MODUL 05</small><h3>Database & Sistem</h3></div><span class="state live">Pemeriksaan awal</span></div>
+        <p id="db-status">Memeriksa koneksi Supabase…</p>
+        <small class="note">Status koneksi tidak menggantikan pemeriksaan RLS dan RPC.</small>
+      </article>
+      <article class="admin-card" id="settings">
+        <div class="card-head"><div><small>MODUL 06</small><h3>Pengaturan</h3></div><span class="state planned">Tahap berikutnya</span></div>
+        <p>Pengaturan keamanan, durasi sesi, verifikasi tambahan, dan preferensi panel.</p>
+      </article>
+    </section>
+    <p class="admin-disclaimer">Foundation v0.2 — modul administratif yang mengubah akun atau data belum dibuka sampai kontrol server-side dan audit trail diterapkan.</p>
+  </main>
+</body>
+</html>
