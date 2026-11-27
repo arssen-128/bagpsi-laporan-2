@@ -59,7 +59,3 @@ Paket diperiksa untuk sintaks JS, import lokal, referensi file HTML/CSS/JS, dan 
 
 ### WAJIB sebelum deploy
 Jalankan SQL `supabase/migrations/20261126_report_status_draft_final.sql` satu kali pada Supabase SQL Editor. Migrasi menambahkan `status` dan `finalized_at`; semua record lama menjadi `draft` secara konservatif karena autosave versi lama tidak membedakan status. Migrasi tidak mengubah RLS/policies. Jangan menjalankan update massal yang menandai data lama sebagai final tanpa pemeriksaan manual.
-
-
-## Hak akses Draft dan Final
-Lihat `supabase/README-ACCESS-CONTROL.md` dan jalankan migration `supabase/migrations/20261126_draft_visibility_admin_delete.sql` sebelum deploy. Draft hanya terlihat pembuat/admin; Final dapat dibaca semua pengguna terautentikasi; penghapusan Final hanya admin. Arsip menampilkan Baca/Edit/Hapus sesuai status dan hak akses. Final dibaca dalam halaman read-only; revisi dibuat sebagai Draft baru.

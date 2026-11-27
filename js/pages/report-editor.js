@@ -5,7 +5,7 @@ const auth=await requireSession();if(!auth)throw new Error("Sesi tidak tersedia.
 const {client,user}=auth;
 const DRAFT_KEY="bagpsi-report-draft-v3";
 const $=s=>document.querySelector(s),activities=$("#activities"),template=$("#activity-template");
-let reportId=new URLSearchParams(location.search).get("id"),reportOwnerId=null,masterPeople=[],saving=false,saveAgain=false,saveTimer=null,reportStatus="draft",finalData=null;
+let reportId=new URLSearchParams(location.search).get("id"),masterPeople=[],saving=false,saveAgain=false,saveTimer=null,reportStatus="draft",finalData=null;
 function readDraft(){try{return JSON.parse(localStorage.getItem(DRAFT_KEY)||"null")}catch{return null}}
 function collect(){
  return {jenis:$("#jenis").value,penerima:$("#penerima").value.trim(),pembuka:$("#pembuka").value,penutup:$("#penutup").value,
@@ -18,66 +18,18 @@ function collect(){
 }
 function renderPreview(){const text=buildReport(collect());$("#live-preview").textContent=text;try{localStorage.setItem(DRAFT_KEY,JSON.stringify(collect()));$("#draft-status").textContent="Draf tersimpan di perangkat ini."}catch{}}
 function updateNumbers(){const cards=[...activities.children];cards.forEach((c,i)=>{c.querySelector(".activity-number").textContent=`Kegiatan ${i+1}`;c.querySelector(".remove-activity").hidden=cards.length===1;});$("#add-activity").hidden=$("#jenis").value==="karo_sdm";}
-function rankScore(value){
- const r=String(value||"").toUpperCase().replace(/[^A-Z]/g,"");
- const ranks={JENDERALPOLISI:18,JENDERAL:18,KOMJENPOL:17,KOMJEN:17,IRJENPOL:16,IRJEN:16,BRIGJENPOL:15,BRIGJEN:15,KOMBESPOL:14,KOMBES:14,AKBP:13,KOMPOL:12,AKP:11,IPTU:10,IPDA:9,AIPTU:8,AIPDA:7,BRIPKA:6,BRIGPOL:5,BRIPTU:4,BRIPDA:3,BHARAKA:2,BHARATU:1,BHARADA:0};
- return ranks[r]??-1;
-}
-function personKey(p){
- const id=p?.personel_id||p?.id||"";
- if(id)return `id:${String(id)}`;
- return `name:${String(p?.pangkat||"").trim().toUpperCase()}|${String(p?.nama||"").trim().replace(/\s+/g," ").toUpperCase()}`;
-}
-function isPersonAlreadySelected(card,person){
- const key=personKey(person);
- // Duplikasi hanya dilarang di dalam kegiatan yang sama.
- // Personel yang sama tetap boleh bertugas pada kegiatan lain dalam laporan.
- return [...card.querySelectorAll(".selected-person")].some(row=>personKey({id:row.dataset.id,pangkat:row.dataset.rank,nama:row.dataset.name})===key);
-}
-function renderPersonnelResults(card,query=""){
- const wrap=card.querySelector(".personnel-combobox"),list=wrap?.querySelector(".personnel-results");if(!list)return;
- const q=query.trim().toLocaleLowerCase("id-ID");
- const results=masterPeople.filter(p=>p.status==="aktif"&&!isPersonAlreadySelected(card,p)&&[p.nama,p.nrp,p.pangkat,p.jabatan,p.bagian].some(v=>String(v||"").toLocaleLowerCase("id-ID").includes(q)))
-  .sort((a,b)=>rankScore(b.pangkat)-rankScore(a.pangkat)||String(a.nama).localeCompare(String(b.nama),"id"));
- list.replaceChildren();
- if(!results.length){const empty=document.createElement("div");empty.className="personnel-empty";empty.textContent=q?"Personel tidak ditemukan atau sudah ditambahkan pada kegiatan ini.":"Semua personel yang tersedia sudah dipilih pada kegiatan ini.";list.append(empty);return;}
- results.forEach(p=>{
-  const option=document.createElement("button");option.type="button";option.className="personnel-option";option.setAttribute("role","option");option.dataset.personId=p.id;
-  const initials=String(p.nama||"?").trim().split(/\s+/).slice(0,2).map(x=>x[0]||"").join("").toUpperCase();
-  const avatar=document.createElement("span");avatar.className="personnel-avatar";avatar.textContent=initials;
-  const info=document.createElement("span");info.className="personnel-option-info";
-  const name=document.createElement("strong");name.textContent=`${p.pangkat||""} ${p.nama||""}`.trim();
-  const meta=document.createElement("small");meta.textContent=[p.nrp?`NRP ${p.nrp}`:"",p.jabatan,p.bagian].filter(Boolean).join(" · ")||"Personel aktif";
-  info.append(name,meta);const plus=document.createElement("span");plus.className="personnel-option-add";plus.textContent="＋";option.append(avatar,info,plus);
-  option.addEventListener("click",()=>{
-   if(isPersonAlreadySelected(card,p)){renderPersonnelResults(card,wrap.querySelector(".personnel-search").value);return;}
-   const select=card.querySelector(".master-person-select");select.value=String(p.id);select.dispatchEvent(new Event("change",{bubbles:true}));
-   const search=wrap.querySelector(".personnel-search");search.value=`${p.pangkat||""} ${p.nama||""}`.trim();wrap.classList.remove("is-open");search.setAttribute("aria-expanded","false");
-  });list.append(option);
- });
-}
 function fillPersonOptions(card){
  const select=card.querySelector(".master-person-select");select.replaceChildren(new Option(masterPeople.length?"Pilih personel…":"Belum ada personel aktif",""));
  masterPeople.filter(p=>p.status==="aktif").forEach(p=>select.add(new Option(`${p.pangkat} ${p.nama}${p.jabatan?" — "+p.jabatan:""}`,p.id)));
- const search=card.querySelector(".personnel-search");if(search){search.value="";renderPersonnelResults(card,"");}
 }
 function addSelectedPerson(card,p){
- if(!p?.pangkat||!p?.nama)return false;
- if(isPersonAlreadySelected(card,p)){notify("Personel ini sudah ditambahkan pada kegiatan ini.",true);return false;}
+ if(!p?.pangkat||!p?.nama)return;
  const row=document.createElement("div");row.className="selected-person";
  Object.assign(row.dataset,{rank:p.pangkat,name:p.nama,degree:p.gelar||"",position:p.jabatan||"",id:p.personel_id||p.id||""});
- const detail=document.createElement("span");detail.className="selected-person-detail";
- const title=document.createElement("b");title.textContent=`${p.pangkat} ${p.nama}`;
- const sub=document.createElement("small");sub.textContent=[p.gelar,p.jabatan].filter(Boolean).join(" · ");detail.append(title,sub);
- const del=document.createElement("button");del.type="button";del.className="selected-person-remove";del.textContent="Hapus";del.addEventListener("click",()=>{row.remove();sortSelectedPeople(card);const input=card.querySelector(".personnel-search");if(input)renderPersonnelResults(card,input.value);renderPreview();scheduleSave()});
- row.append(detail,del);card.querySelector(".selected-people").append(row);sortSelectedPeople(card);
- const input=card.querySelector(".personnel-search");if(input)renderPersonnelResults(card,input.value);
- return true;
-}
-function sortSelectedPeople(card){
- const box=card.querySelector(".selected-people");
- const rows=[...box.children].sort((a,b)=>rankScore(b.dataset.rank)-rankScore(a.dataset.rank));
- rows.forEach((row,i)=>{row.classList.toggle("selected-person-lead",i===0);box.append(row);});
+ const detail=document.createElement("span");detail.innerHTML=`<b>${esc(`${p.pangkat} ${p.nama}`)}</b><small>${esc([p.gelar,p.jabatan].filter(Boolean).join(" · "))}</small>`;
+ const del=document.createElement("button");del.type="button";del.className="text-button";del.textContent="Hapus";del.addEventListener("click",()=>{row.remove();renderPreview()});
+ row.append(detail,del);card.querySelector(".selected-people").append(row);
+ const box=card.querySelector(".selected-people");[...box.children].sort((a,b)=>{const rank={JENDERAL:17,KOMJEN:16,IRJEN:15,BRIGJEN:14,KOMBES:13,AKBP:12,KOMPOL:11,AKP:10,IPTU:9,IPDA:8,AIPTU:7,AIPDA:6,BRIPKA:5,BRIGPOL:4,BRIPTU:3,BRIPDA:2};return (rank[b.dataset.rank]||0)-(rank[a.dataset.rank]||0)||a.dataset.name.localeCompare(b.dataset.name,"id")}).forEach(x=>box.append(x));
 }
 function addActivity(data={}){
  if($("#jenis").value==="karo_sdm"&&activities.children.length>=1)return;
@@ -100,7 +52,7 @@ async function loadPeople(){
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function reportPayload(data,status="draft"){
  const now=new Date().toISOString();
- return {user_id:reportOwnerId||user.id,judul:(data.kegiatan[0]?.nama||"Laporan BAGPSI").slice(0,180),jenis:data.jenis,data,isi_laporan:buildReport(data),status,updated_at:now,finalized_at:status==="final"?now:null};
+ return {user_id:user.id,judul:(data.kegiatan[0]?.nama||"Laporan BAGPSI").slice(0,180),jenis:data.jenis,data,isi_laporan:buildReport(data),status,updated_at:now,finalized_at:status==="final"?now:null};
 }
 function setEditorMode(status){
  reportStatus=status;
@@ -121,7 +73,7 @@ async function persistDraft({quiet=false}={}){
  if(saving){saveAgain=true;return false;}saving=true;clearTimeout(saveTimer);$("#save-draft").disabled=true;
  const data=collect(),payload=reportPayload(data,"draft");
  try{
-  let result=reportId?await client.from(TABLES.reports).update(payload).eq("id",reportId).select("id,status").single():await client.from(TABLES.reports).insert(payload).select("id,status").single();
+  let result=reportId?await client.from(TABLES.reports).update(payload).eq("id",reportId).eq("user_id",user.id).select("id,status").single():await client.from(TABLES.reports).insert(payload).select("id,status").single();
   if(result.error)throw result.error;reportId=result.data.id;reportStatus="draft";
   history.replaceState(null,"",`./buat-laporan.html?id=${encodeURIComponent(reportId)}`);
   $("#sync-status").textContent=`Draft tersimpan online · ${new Date().toLocaleTimeString("id-ID")}`;
@@ -137,9 +89,10 @@ async function finalizeReport(){
  if(!data.kegiatan.length||!data.kegiatan[0].nama){notify("Isi nama kegiatan sebelum finalisasi.",true);return;}
  if(!confirm("Finalisasi laporan ini? Setelah final, laporan akan dikunci. Untuk perubahan berikutnya gunakan Buat Revisi."))return;
  const saved=reportId?true:await persistDraft({quiet:false});if(!saved||!reportId)return;
+ const payload=reportPayload(data,"final");
  $("#finalize-report").disabled=true;
  try{
-  const {data:row,error}=await client.rpc("finalize_laporan",{p_report_id:reportId});
+  const {data:row,error}=await client.from(TABLES.reports).update(payload).eq("id",reportId).eq("user_id",user.id).eq("status","draft").select("id,status,finalized_at").single();
   if(error)throw error;finalData=row;setEditorMode("final");localStorage.removeItem(DRAFT_KEY);$("#sync-status").textContent="Laporan final tersimpan online";notify("Laporan berhasil difinalisasi.");
  }catch(e){notify(`Finalisasi gagal: ${e.message}. Data tetap berstatus draft.`,true);}
  finally{$("#finalize-report").disabled=false;}
@@ -181,8 +134,7 @@ $("#location-cancel").addEventListener("click",()=>hideModal(locationModal));$("
 $("#manual-cancel").addEventListener("click",()=>hideModal(manualModal));$("#manual-close").addEventListener("click",()=>hideModal(manualModal));$("#manual-save").addEventListener("click",saveManual);
 for(const modal of [locationModal,manualModal])modal.addEventListener("click",e=>{if(e.target===modal)hideModal(modal);});document.addEventListener("keydown",e=>{if(e.key==="Escape"){hideModal(locationModal);hideModal(manualModal);}});
 
-activities.addEventListener("focusin",e=>{if(e.target.matches(".personnel-search")){const card=e.target.closest(".activity-card"),wrap=e.target.closest(".personnel-combobox");renderPersonnelResults(card,e.target.value);wrap.classList.add("is-open");e.target.setAttribute("aria-expanded","true");}});
-activities.addEventListener("input",e=>{if(e.target.matches(".personnel-search")){renderPersonnelResults(e.target.closest(".activity-card"),e.target.value);e.target.closest(".personnel-combobox").classList.add("is-open");e.target.setAttribute("aria-expanded","true");return;}if(reportStatus==="final")return;if(e.target.matches(".activity-location"))delete e.target.dataset.meta;if(e.target.matches(".activity-date")){const d=e.target.value;const day=d?new Intl.DateTimeFormat("id-ID",{weekday:"long"}).format(new Date(d+"T00:00:00")):"";e.target.closest(".activity-card").querySelector(".activity-day").value=day;}renderPreview();scheduleSave();});
+activities.addEventListener("input",e=>{if(reportStatus==="final")return;if(e.target.matches(".activity-location"))delete e.target.dataset.meta;if(e.target.matches(".activity-date")){const d=e.target.value;const day=d?new Intl.DateTimeFormat("id-ID",{weekday:"long"}).format(new Date(d+"T00:00:00")):"";e.target.closest(".activity-card").querySelector(".activity-day").value=day;}renderPreview();scheduleSave();});
 $("#report-form").addEventListener("input",e=>{if(reportStatus==="final")return;if(!e.target.closest("#activities")){renderPreview();scheduleSave();}});
 $("#report-form").addEventListener("change",e=>{
  if(reportStatus==="final")return;
@@ -194,7 +146,7 @@ $("#report-form").addEventListener("change",e=>{
 activities.addEventListener("click",e=>{
  if(reportStatus==="final")return;
  const card=e.target.closest(".activity-card");if(!card)return;
- if(e.target.closest(".add-person")){const rank=card.querySelector(".person-rank").value,name=card.querySelector(".person-name").value.trim();if(!rank||!name){notify("Pilih personel dari master terlebih dahulu.",true);return;}addSelectedPerson(card,{pangkat:rank,nama:name,gelar:card.querySelector(".person-degree").value,jabatan:card.querySelector(".person-position").value,personel_id:card.querySelector(".master-person-select").value});card.querySelector(".person-rank").value="";card.querySelector(".person-name").value="";card.querySelector(".person-degree").value="";card.querySelector(".person-position").value="";card.querySelector(".master-person-select").value="";const search=card.querySelector(".personnel-search");if(search){search.value="";search.placeholder="Cari nama, pangkat, atau jabatan…";renderPersonnelResults(card,"");}renderPreview();scheduleSave();}
+ if(e.target.closest(".add-person")){const rank=card.querySelector(".person-rank").value,name=card.querySelector(".person-name").value.trim();if(!rank||!name){notify("Pilih personel dari master terlebih dahulu.",true);return;}addSelectedPerson(card,{pangkat:rank,nama:name,gelar:card.querySelector(".person-degree").value,jabatan:card.querySelector(".person-position").value,personel_id:card.querySelector(".master-person-select").value});card.querySelector(".person-rank").value="";card.querySelector(".person-name").value="";card.querySelector(".person-degree").value="";card.querySelector(".person-position").value="";card.querySelector(".master-person-select").value="";renderPreview();scheduleSave();}
  if(e.target.closest(".remove-activity")&&activities.children.length>1){card.remove();updateNumbers();renderPreview();scheduleSave();}
 });
 $("#add-activity").addEventListener("click",()=>{if($("#jenis").value==="karopsi"){addActivity();scheduleSave();}});
@@ -203,14 +155,13 @@ $("#finalize-report").addEventListener("click",finalizeReport);
 $("#new-report").addEventListener("click",()=>{
  const isRevision=reportStatus==="final";
  if(!confirm(isRevision?"Buat revisi baru dari laporan final ini? Laporan final sebelumnya tetap tersimpan." : "Mulai laporan baru? Draft yang sedang dikerjakan tetap tersimpan di arsip."))return;
- clearTimeout(saveTimer);saveAgain=false;const seed=isRevision?collect():DEFAULT_REPORT();reportId=null;reportOwnerId=user.id;reportStatus="draft";finalData=null;history.replaceState(null,"","./buat-laporan.html");load(seed);setEditorMode("draft");scheduleSave();
+ clearTimeout(saveTimer);saveAgain=false;const seed=isRevision?collect():DEFAULT_REPORT();reportId=null;reportStatus="draft";finalData=null;history.replaceState(null,"","./buat-laporan.html");load(seed);setEditorMode("draft");scheduleSave();
  });
 $("#copy-preview").addEventListener("click",async()=>{try{await navigator.clipboard.writeText($("#live-preview").textContent);notify("Teks laporan disalin.");}catch{notify("Clipboard tidak tersedia pada browser ini.",true);}});
 $("#sync-status").textContent="Memeriksa koneksi…";
-document.addEventListener("click",e=>{if(e.target.closest(".personnel-combobox"))return;document.querySelectorAll(".personnel-combobox.is-open").forEach(w=>{w.classList.remove("is-open");const i=w.querySelector(".personnel-search");i?.setAttribute("aria-expanded","false");});});
 await loadPeople();
 if(reportId){
- const {data,error}=await client.from(TABLES.reports).select("id,user_id,data,status,finalized_at").eq("id",reportId).is("deleted_at",null).single();
+ const {data,error}=await client.from(TABLES.reports).select("id,data,status,finalized_at").eq("id",reportId).eq("user_id",user.id).single();
  if(error){notify(`Laporan gagal dibuka: ${error.message}`,true);load(readDraft()||DEFAULT_REPORT());}
- else{reportOwnerId=data.user_id;load(data.data);finalData=data;if(data.status==="final")localStorage.removeItem(DRAFT_KEY);setEditorMode(data.status==="final"?"final":"draft");if(data.status==="draft"&&data.user_id!==user.id){notify("Anda sedang membuka draft milik pengguna lain sebagai admin.");}}
-}else{reportOwnerId=user.id;load(readDraft()||DEFAULT_REPORT());setEditorMode("draft");}
+ else{load(data.data);finalData=data;if(data.status==="final")localStorage.removeItem(DRAFT_KEY);setEditorMode(data.status==="final"?"final":"draft");}
+}else{load(readDraft()||DEFAULT_REPORT());setEditorMode("draft");}

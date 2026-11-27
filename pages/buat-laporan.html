@@ -9,7 +9,7 @@
 <div class="app-frame">
   <aside class="sidebar" id="sidebar">
     <a class="brand" href="./dashboard.html"><img src="../assets/PSI.png" alt=""><span><b>BAGPSI REPORT</b><small>RO SDM POLDA BANTEN</small></span></a>
-    <p class="nav-caption">MENU UTAMA</p><nav class="nav-list"><a class="nav-link " href="./dashboard.html"><span>▦</span>Dashboard</a><a class="nav-link active" href="./buat-laporan.html"><span>▤</span>Buat laporan</a><a class="nav-link " href="./laporan-tersimpan.html"><span>▣</span>Laporan tersimpan</a><a class="nav-link " href="./pratinjau.html"><span>≡</span>Pratinjau teks</a><a class="nav-link " href="./master-personel.html"><span>♟</span>Master personel</a></nav>
+    <p class="nav-caption">MENU UTAMA</p><nav class="nav-list"><a class="nav-link " href="./dashboard.html"><span>▦</span>Dashboard</a><a class="nav-link active" href="./buat-laporan.html"><span>▤</span>Buat laporan</a><a class="nav-link" href="./karopsi-builder.html"><span>▧</span>Kompilasi KAROPSI</a><a class="nav-link " href="./laporan-tersimpan.html"><span>▣</span>Laporan tersimpan</a><a class="nav-link " href="./pratinjau.html"><span>≡</span>Pratinjau teks</a><a class="nav-link " href="./master-personel.html"><span>♟</span>Master personel</a></nav>
     <div class="sidebar-foot"><i></i> Terhubung ke BAGPSI REPORT</div>
   </aside>
   <div class="app-main">
@@ -64,17 +64,7 @@ Bersama ini disampaikan laporan kegiatan sebagai berikut.</textarea></div>
   <div class="field span-2"><label>Hasil kegiatan</label><textarea class="activity-result" rows="3"></textarea></div>
  </div>
  <div class="personnel-picker">
-  <div class="field personnel-master-field">
-   <label>Pilih personel dari master</label>
-   <div class="personnel-combobox">
-    <span class="personnel-search-icon" aria-hidden="true">⌕</span>
-    <input class="personnel-search" type="search" placeholder="Cari nama, pangkat, atau jabatan…" autocomplete="off" aria-label="Cari personel dari master" aria-expanded="false">
-    <span class="personnel-count" aria-hidden="true">MASTER</span>
-    <div class="personnel-results" role="listbox" aria-label="Hasil pencarian personel"></div>
-   </div>
-   <select class="master-person-select" tabindex="-1" aria-hidden="true"><option value="">Memuat personel…</option></select>
-   <small class="personnel-hint">Pilih personel untuk mengisi data pelaksana secara otomatis. Personel dapat dipilih kembali.</small>
-  </div>
+  <div class="field"><label>Pilih personel dari master</label><select class="master-person-select"><option value="">Memuat personel…</option></select></div>
   <div class="form-grid personnel-inputs">
    <div class="field"><label>Pangkat</label><select class="person-rank"><option value="">Pilih pangkat</option><option>JENDERAL</option><option>KOMJEN</option><option>IRJEN</option><option>BRIGJEN</option><option>KOMBES</option><option>KOMBES POL.</option><option>AKBP</option><option>KOMPOL</option><option>AKP</option><option>IPTU</option><option>IPDA</option><option>AIPTU</option><option>AIPDA</option><option>BRIPKA</option><option>BRIGPOL</option><option>BRIPTU</option><option>BRIPDA</option></select></div>
    <div class="field"><label>Nama</label><input class="person-name" readonly></div>
