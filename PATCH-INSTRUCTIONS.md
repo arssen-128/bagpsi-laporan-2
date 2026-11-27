@@ -1,35 +1,30 @@
-# BAGPSI Dashboard + Admin access patch v0.2
+# RECOVERY PATCH — BAGPSI ROOT LOGIN + ADMIN PANEL
 
-## Temuan yang ditangani
-1. `css/dashboard.css` menetapkan `.dashboard-sidebar { position: relative; }`.
-   Ini menimpa `.sidebar { position: fixed; }` pada `css/app.css`. Sidebar
-   akhirnya kembali ke alur dokumen, mengambil tinggi satu baris, dan mendorong
-   `.app-main` ke bawah. Gejala ini sesuai dengan ruang kosong besar pada screenshot.
-2. `js/core/auth-guard.js` saat ini hanya memasang logout dan mobile menu;
-   belum ada listener `Ctrl+Shift+Alt+P`.
-3. `js/admin/admin-guard.js` tidak ada pada branch `main` saat pemeriksaan.
-4. `pages/admin/index.html` belum ada pada branch `main`.
+## Tujuan
+Mengembalikan `index.html` root ke halaman login BAGPSI dan menempatkan Admin Panel pada URL terpisah. Patch ini mengikuti struktur modular yang didokumentasikan repository: `js/services/supabase.js`, `js/core/auth-guard.js`, `js/pages/login.js`.
 
-## Cara pasang
-1. Salin `css/dashboard-fix.css` ke repository.
-2. Pada `pages/dashboard.html`, tambahkan setelah link `dashboard.css`:
-   `<link rel="stylesheet" href="../css/dashboard-fix.css">`
-3. Salin folder `js/admin/` dan `pages/admin/` ke root repository.
-4. Pada `js/core/auth-guard.js`, tambahkan import:
+## File dalam ZIP
+- `index.html`: salinan halaman login yang tercatat di branch main.
+- `pages/admin/index.html` dan `pages/admin/admin.css`: halaman Admin terpisah dengan path asset yang benar.
+- `js/admin/admin.js`: validasi session + `profiles.role`, lalu query statistik.
+- `js/admin/admin-shortcut.js`: handler shortcut; perlu dihubungkan dari auth guard.
+- `PATCH-INSTRUCTIONS.md`: petunjuk integrasi.
+
+## Langkah pemulihan
+1. Download ZIP, ekstrak.
+2. Dari folder hasil ekstrak, upload/ganti `index.html` ke ROOT repository. Ini mengembalikan halaman login.
+3. Upload folder `pages/admin/` dan `js/admin/` ke root repository, jangan upload folder pembungkus ZIP.
+4. Pada file `js/core/auth-guard.js` (sesuaikan lokasi persis yang ada di repository), tambahkan import:
    `import { installAdminShortcut } from "../admin/admin-shortcut.js";`
-   lalu panggil `installAdminShortcut();` di dalam `requireSession()` setelah sesi berhasil diperoleh.
-5. Pastikan tabel `profiles` berisi baris untuk user yang akan menjadi Admin dengan `role='admin'`.
-6. Commit dan push, lalu hard refresh browser (Ctrl+F5).
+   Di akhir alur `requireSession()` setelah sesi terverifikasi, panggil `installAdminShortcut();`.
+5. Commit ke branch `main`.
+6. Buka `https://arssen-128.github.io/bagpsi-laporan-2/` untuk login.
+7. Admin Panel ada di `https://arssen-128.github.io/bagpsi-laporan-2/pages/admin/index.html`.
 
-## Catatan keamanan dan batasan
-- Shortcut bukan mekanisme otorisasi. Kode memeriksa sesi Supabase dan `profiles.role`.
-- Admin page memeriksa role lagi. RLS wajib tetap menjadi batas keamanan di database.
-- ZIP ini belum mengubah role, membuat/menghapus akun, menonaktifkan akun,
-  menghapus/finalisasi laporan, atau mengubah template.
-- Operasi tersebut harus menggunakan Edge Functions/secure RPC, audit trail
-  append-only, dan policy RLS yang sudah diverifikasi.
-- SQL yang diberikan pengguna tidak memuat policies/RLS atau tabel audit log.
-  Karena itu ZIP ini tidak menambahkan migration SQL yang berisiko mengunci
-  atau membuka data tanpa pemeriksaan policies yang sebenarnya.
-- Query ringkasan dashboard admin hanya akan berhasil bila policies RLS
-  mengizinkan Admin membaca data yang dimaksud.
+## Pemeriksaan sebelum push
+- Pastikan file client Supabase benar-benar berada di `js/services/supabase.js`, sesuai struktur README. `admin.js` mengimpor path tersebut.
+- Pastikan `profiles` memiliki row untuk akun Admin dengan `role='admin'`.
+- Jika statistik gagal dimuat tetapi halaman tampil, cek RLS SELECT untuk `profiles` dan `laporan_cloud`.
+
+## Batasan keamanan
+Shortcut bukan otorisasi; halaman memeriksa ulang session dan role. Operasi buat akun, ubah role, disable, reset password, delete/finalize report, dan ubah template tidak disediakan dalam patch ini. Jangan menaruh service_role key di browser. Operasi sensitif memerlukan Edge Function/secure RPC, RLS, dan audit log append-only.

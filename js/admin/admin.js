@@ -1,52 +1,47 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from '../../config.js';
-const getSupabase = () => createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+import { getSupabase } from "../services/supabase.js";
 
-const PAGE = location.pathname.split('/').pop().replace('.html','');
-const ROUTES = {index:['dashboard','Dashboard Admin'],users:['users','Manajemen Akun'],reports:['reports','Manajemen Laporan'],permissions:['permissions','Hak Akses'], 'audit-log':['audit','Audit Log'],system:['system','Database & Sistem'],settings:['settings','Pengaturan']};
-const [key,title] = ROUTES[PAGE] || ROUTES.index;
-const $ = (s,root=document)=>root.querySelector(s);
-const content=$('#content');
-let sb, currentUser;
+const el = (id) => document.getElementById(id);
 
-function toast(msg){const n=$('#toast');n.textContent=msg;n.classList.add('show');setTimeout(()=>n.classList.remove('show'),2800)}
-function esc(v=''){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function table(headers,rows){return `<div class="table-wrap"><table><thead><tr>${headers.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${rows||''}</tbody></table></div>`}
-function stat(icon,value,label,sub=''){return `<div class="card stat"><div class="stat-icon">${icon}</div><div><strong>${value}</strong><small>${label}</small><div class="kpi-trend">${sub}</div></div></div>`}
-function shell(html){content.innerHTML=html;}
-function setNav(){document.querySelectorAll('#admin-nav a').forEach(a=>a.classList.toggle('active',a.dataset.page===key));$('#page-title').textContent=title;$('#crumb').textContent=title.toUpperCase()}
+async function initAdminPanel() {
+  const client = getSupabase();
+  const { data: sessionResult, error: sessionError } = await client.auth.getSession();
+  if (sessionError) throw sessionError;
+  const session = sessionResult?.session;
 
-async function boot(){
- setNav();
- try{
-  sb=getSupabase();
-  const {data:{session},error}=await sb.auth.getSession(); if(error)throw error;
-  if(!session){location.replace('../../index.html');return}
-  currentUser=session.user; $('#account-email').textContent=currentUser.email||currentUser.id;
-  const {data:isAdmin,error:roleErr}=await sb.rpc('is_bagpsi_admin');
-  if(roleErr) throw new Error('Verifikasi admin gagal: '+roleErr.message);
-  if(isAdmin!==true){shell(`<div class="card"><h2>Akses ditolak</h2><p>Akun ini tidak memiliki hak Administrator pada sistem BAGPSI REPORT.</p><a class="btn" href="../../pages/dashboard.html">Kembali ke aplikasi</a></div>`);return}
-  await render();
- }catch(e){shell(`<div class="card"><h2>Admin Panel belum dapat dibuka</h2><p>${esc(e.message)}</p><div class="notice">Panel ini mensyaratkan sesi Supabase aktif dan RPC <code>is_bagpsi_admin()</code> yang mengembalikan <code>true</code>. Jika RPC belum tersedia, jangan mengakali pemeriksaan dari browser.</div><a class="btn light" href="../../pages/dashboard.html">Kembali ke aplikasi</a></div>`)}
+  if (!session) {
+    location.replace(new URL("../../index.html", location.href));
+    return;
+  }
+
+  el("admin-email").textContent = session.user.email || "Admin";
+  const { data: profile, error: profileError } = await client
+    .from("profiles").select("role").eq("id", session.user.id).maybeSingle();
+
+  if (profileError) throw profileError;
+  if (profile?.role !== "admin") {
+    alert("Akses ditolak. Akun ini bukan Admin.");
+    location.replace(new URL("../dashboard.html", location.href));
+    return;
+  }
+
+  const queries = await Promise.all([
+    client.from("profiles").select("id", { count: "exact", head: true }),
+    client.from("profiles").select("id", { count: "exact", head: true }).eq("role", "admin"),
+    client.from("laporan_cloud").select("id", { count: "exact", head: true }),
+    client.from("laporan_cloud").select("id", { count: "exact", head: true }).eq("status", "draft"),
+    client.from("laporan_cloud").select("id", { count: "exact", head: true }).eq("status", "final")
+  ]);
+  const failed = queries.find(q => q.error);
+  if (failed) throw failed.error;
+
+  ["users-count", "admins-count", "reports-count", "draft-count", "final-count"].forEach((id, i) => {
+    const q = [queries[0], queries[1], queries[2], queries[3], queries[4]][i];
+    el(id).textContent = q.count ?? 0;
+  });
+  el("db-status").textContent = "Supabase terhubung; query ringkasan berhasil.";
 }
-async function getReports(){const {data,error}=await sb.from('laporan_cloud').select('id,user_id,judul,jenis,updated_at,status,finalized_at').order('updated_at',{ascending:false}).limit(250);if(error)throw error;return data||[]}
-async function render(){
- try{
-  if(key==='dashboard')return await dashboard();
-  if(key==='reports')return await reports();
-  if(key==='users')return users();
-  if(key==='permissions')return permissions();
-  if(key==='audit')return audit();
-  if(key==='system')return system();
-  if(key==='settings')return settings();
- }catch(e){shell(`<div class="card"><h2>Data tidak dapat dimuat</h2><p>${esc(e.message)}</p><div class="notice">Periksa nama kolom, kebijakan RLS, dan hak akses pada Supabase. Panel tidak akan mengubah data jika struktur belum terverifikasi.</div></div>`)}
-}
-async function dashboard(){const reports=await getReports();const finals=reports.filter(r=>r.status==='final').length,drafts=reports.filter(r=>r.status==='draft'||!r.status).length;const byDay=Array(7).fill(0);reports.slice(0,70).forEach((r,i)=>byDay[i%7]++);shell(`<div class="grid stats">${stat('♙','—','Total Pengguna','Data Auth memerlukan Edge Function')}${stat('♛','—','Administrator','Sumber role belum dikonfigurasi')}${stat('▤',reports.length,'Laporan Terbaca','Maks. 250 laporan terbaru')}${stat('▱',finals,'Final','Berdasarkan status database')}${stat('▧',drafts,'Draft','Termasuk data tanpa status')}</div><div class="grid cols"><div class="card"><h2>Aktivitas Laporan Terbaru</h2><p class="muted">Distribusi 7 kelompok data terbaru (indikator awal, bukan tren historis).</p><div class="chart-bars">${byDay.map((n,i)=>`<span style="height:${Math.max(8,n*15)}px" data-label="${i+1}"></span>`).join('')}</div><p class="muted">Data laporan ditarik dari <code>laporan_cloud</code>.</p></div><div class="card"><h2>Status Panel</h2><p><span class="check">●</span> Sesi pengguna aktif</p><p><span class="check">●</span> Verifikasi admin berhasil</p><p><span class="check">●</span> Query laporan berhasil</p><div class="notice">Koneksi Supabase terverifikasi melalui query. Status RPC, migrasi, RLS, dan Edge Functions belum diaudit otomatis.</div><a class="btn light" href="system.html">Periksa sistem</a></div></div><div class="card" style="margin-top:16px"><div class="section-head"><h2>Laporan Terbaru</h2><a href="reports.html">Lihat semua →</a></div>${table(['Judul','Jenis','Pemilik (UID)','Status','Diperbarui'],reports.slice(0,8).map(r=>`<tr><td>${esc(r.judul||'(Tanpa judul)')}</td><td>${esc(r.jenis||'-')}</td><td>${esc(r.user_id||'-').slice(0,18)}…</td><td><span class="pill ${r.status==='draft'?'draft':''}">${esc(r.status||'legacy')}</span></td><td>${r.updated_at?new Date(r.updated_at).toLocaleString('id-ID'):'-'}</td></tr>`).join(''))}</div>`)}
-async function reports(){const data=await getReports();shell(`<div class="card"><div class="section-head"><h2>Seluruh Laporan</h2><span class="muted">${data.length} record · maks. 250</span></div><div class="toolbar"><input class="input" id="search" placeholder="Cari judul atau UID pembuat…"><select id="status"><option value="">Semua status</option><option value="draft">Draft</option><option value="final">Final</option><option value="legacy">Tanpa status</option></select><select id="jenis"><option value="">Semua jenis</option><option>KARO SDM</option><option>KAROPSI</option></select><button class="btn light" id="reload">Muat ulang</button></div><div id="report-table"></div><div class="notice">Tindakan ubah template, finalisasi, dan hapus sengaja belum diaktifkan. Perubahan tersebut harus memakai validasi server-side, pencatatan before/after, dan mekanisme revisi Final.</div></div>`);const draw=()=>{const q=$('#search').value.toLowerCase(),s=$('#status').value,j=$('#jenis').value;const rows=data.filter(r=>(!q||(r.judul||'').toLowerCase().includes(q)||(r.user_id||'').toLowerCase().includes(q))&&(!s||(s==='legacy'?!r.status:r.status===s))&&(!j||String(r.jenis||'').toLowerCase().includes(j.toLowerCase())));$('#report-table').innerHTML=table(['Judul','Jenis','Pembuat (UID)','Status','Tanggal','Aksi'],rows.map(r=>`<tr><td>${esc(r.judul||'(Tanpa judul)')}</td><td>${esc(r.jenis||'-')}</td><td>${esc(r.user_id||'-')}</td><td><span class="pill ${r.status==='draft'?'draft':''}">${esc(r.status||'legacy')}</span></td><td>${r.updated_at?new Date(r.updated_at).toLocaleDateString('id-ID'):'-'}</td><td><button class="btn light" data-id="${esc(r.id)}">Detail</button></td></tr>`).join('')||'<tr><td colspan="6" class="empty">Tidak ada data sesuai filter.</td></tr>')};['search','status','jenis'].forEach(id=>$('#'+id).addEventListener('input',draw));$('#reload').onclick=()=>render();draw();$('#report-table').addEventListener('click',e=>{const b=e.target.closest('button[data-id]');if(!b)return;const r=data.find(x=>String(x.id)===b.dataset.id);alert(`ID: ${r.id}\nJudul: ${r.judul}\nJenis: ${r.jenis}\nStatus: ${r.status||'legacy'}\nUID: ${r.user_id}`)})}
-function users(){shell(`<div class="card"><div class="section-head"><h2>Manajemen Akun</h2><button class="btn" disabled title="Menunggu Edge Function admin-create-user">＋ Buat Akun</button></div><div class="notice">Daftar akun Auth dan operasi create, role, deactivate, serta reset password memerlukan Supabase Edge Function dengan service-role secret di server. Browser tidak boleh mengakses Auth Admin API langsung.</div><div class="toolbar"><input class="input" placeholder="Cari nama, email, atau NRP…" disabled><select disabled><option>Semua Role</option></select><select disabled><option>Semua Status</option></select></div><div class="empty">Integrasi akun belum diaktifkan. Tidak ada data akun contoh yang disamarkan sebagai data asli.</div></div>`)}
-function permissions(){shell(`<div class="card"><h2>Matriks Hak Akses</h2><p class="muted">Rancangan target akses. Ini bukan konfigurasi RLS aktual.</p>${table(['Modul','Admin','User'],[['Dashboard Admin','✓','—'],['Manajemen Akun','✓','—'],['Manajemen Laporan','✓','Laporan yang diizinkan'],['Ubah Template','✓','—'],['Finalisasi Laporan','✓','✓ sesuai alur'],['Kompilasi KAROPSI','✓','✓ sesuai akses sumber'],['Audit Log','✓','—'],['Database & Sistem','✓','—'],['Pengaturan Admin','✓','—']].map(r=>`<tr><td>${r[0]}</td><td class="check">${r[1]}</td><td>${r[2]}</td></tr>`).join(''))}<div class="notice danger-note">Perubahan role tidak boleh dilakukan hanya dengan mengubah metadata dari frontend. Gunakan Edge Function/RPC terotorisasi dan audit log append-only.</div></div>`)}
-function audit(){shell(`<div class="card"><h2>Audit Log</h2><div class="notice">Audit log belum ditampilkan karena tabel dan skema audit belum diverifikasi pada project Supabase. Jangan membuat tabel asumsi lalu menganggapnya sudah merekam aktivitas.</div><p>Peristiwa yang direncanakan:</p><ul><li>Login admin dan kegagalan verifikasi tambahan.</li><li>Pembuatan akun, perubahan role, penonaktifan, dan reset password.</li><li>Perubahan laporan, finalisasi, revisi, perubahan template, dan penghapusan.</li><li>Akses administratif dan perubahan konfigurasi sistem.</li></ul><p class="muted">Catatan minimal: actor, action, target, timestamp, before/after, request_id, metadata. Penulisan dilakukan server-side; UI hanya-baca.</p></div>`)}
-function system(){shell(`<div class="grid cols"><div class="card"><h2>Integrasi Terverifikasi pada Panel</h2><p><span class="check">●</span> Supabase client dapat dibuat dari konfigurasi aplikasi.</p><p><span class="check">●</span> RPC <code>is_bagpsi_admin()</code> mengembalikan true untuk sesi ini.</p><p><span class="check">●</span> Query <code>laporan_cloud</code> berhasil (jika halaman ini terbuka).</p></div><div class="card"><h2>Belum Diverifikasi</h2><p>○ Struktur tabel role</p><p>○ Seluruh kebijakan RLS</p><p>○ RPC administratif</p><p>○ Edge Functions dan secrets</p><p>○ Riwayat migrasi aktual</p></div></div><div class="card" style="margin-top:16px"><h2>Checklist sebelum produksi</h2><ol><li>Audit schema, policies, grants, functions, dan triggers yang sudah ada.</li><li>Pastikan fungsi role tidak dapat dipalsukan oleh user.</li><li>Deploy Edge Functions dengan secrets di sisi server.</li><li>Uji akses Admin/User menggunakan dua akun berbeda.</li><li>Uji audit log, transaksi, dan larangan menghapus Admin terakhir.</li></ol></div>`)}
-function settings(){shell(`<div class="card"><h2>Pengaturan Admin Panel</h2><div class="notice">Kontrol di bawah adalah rancangan konfigurasi. Penyimpanan belum dihubungkan ke tabel pengaturan.</div><label class="setting">Durasi sesi Admin<select disabled><option>30 menit</option><option>15 menit</option><option>60 menit</option></select></label><label class="setting">Verifikasi tambahan<select disabled><option>MFA / TOTP (direkomendasikan)</option><option>Re-authentication</option></select></label><label class="setting">Pencatatan audit<select disabled><option>Wajib aktif</option></select></label><p class="muted">Setelan keamanan harus diberlakukan di server; preferensi UI saja tidak memberikan kontrol keamanan.</p></div>`)}
-$('#logout').addEventListener('click',async()=>{if(!sb)return;const {error}=await sb.auth.signOut();if(error)toast(error.message);else location.replace('../../index.html')});$('#menu-toggle').addEventListener('click',()=>document.querySelector('.layout').classList.toggle('menu-open'));
-boot();
+
+initAdminPanel().catch(error => {
+  console.error("[BAGPSI Admin]", error);
+  el("db-status").textContent = `Gagal memuat data: ${error.message || "Periksa RLS dan konfigurasi Supabase."}`;
+});
