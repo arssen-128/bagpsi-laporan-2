@@ -28,3 +28,8 @@ CARA PASANG:
 
 PEMERIKSAAN:
 ZIP dan path aset diperiksa. JavaScript dan query Supabase tidak diubah dari paket sebelumnya. Perbaikan utama adalah CSS posisi sidebar. Belum dilakukan browser E2E atau live Supabase test pada akun pengguna.
+
+PENYESUAIAN VISUAL LANJUTAN:
+- Foto mobil sidebar kini memakai komposisi navy fade yang menyatu dari atas ke bawah; garis emas pemisah dihapus.
+- Logo PSI pada brand sidebar tidak lagi diberi bidang putih tambahan, sehingga bentuk emblem aslinya tampil natural.
+- Watermark dibuat lebih halus dan grayscale agar tidak tampak seperti stiker putih di dalam kartu.
