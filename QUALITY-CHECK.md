@@ -45,3 +45,12 @@ Tidak ada dasar untuk menjanjikan "no bug" sebelum uji end-to-end di lingkungan 
 - Final dikunci; perubahan dilakukan melalui Buat Revisi yang membuat record draft baru.
 - Arsip menampilkan dan memfilter Draft/Final.
 - SQL migration wajib dijalankan sebelum deploy; pemeriksaan browser/Supabase live belum dilakukan.
+
+
+## Pemeriksaan kompilasi KAROPSI
+- [x] Penyimpanan Draft/Final diarahkan melalui satu RPC transaksional; kegagalan snapshot membatalkan transaksi.
+- [x] Database memvalidasi bahwa semua sumber adalah laporan `karo_sdm` berstatus `final`.
+- [x] ID sumber duplikat ditolak oleh RPC.
+- [x] Snapshot sumber menyimpan data dan teks laporan pada saat kompilasi.
+- [x] Laporan lama tidak dipromosikan otomatis dari Draft menjadi Final.
+- [ ] Uji integrasi Supabase (RLS, RPC, akun admin/non-admin, dan data produksi) belum dapat dilakukan dari paket lokal.

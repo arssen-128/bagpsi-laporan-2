@@ -30,16 +30,51 @@ function renderSources(){const q=$("#source-search").value.trim().toLowerCase(),
  const root=$("#source-list");if(!rows.length){root.innerHTML='<div class="empty-state">Tidak ada laporan Final yang cocok atau dapat Anda akses.</div>';return;}
  root.innerHTML=rows.map(r=>{const a=firstActivity(r),isPicked=picked.has(r.id);return `<article class="source-row"><div class="source-main"><strong>${esc(sourceLabel(r))}</strong><small>${esc(r.judul||"Laporan KARO SDM")} · ${esc(dateText(reportDate(r)))} · ${esc(a.lokasi||"Lokasi tidak dicantumkan")}</small><span class="tag status-final">FINAL</span></div><button class="btn ${isPicked?"quiet":"outline"}" data-add-source="${esc(r.id)}" ${isPicked||!canEdit()?"disabled":""}>${isPicked?"Sudah ditambahkan":"＋ Tambahkan"}</button></article>`;}).join("");}
 function renderPeriods(){const el=$("#source-period"),old=el.value,values=[...new Set(sources.map(reportDate).filter(Boolean).map(x=>x.slice(0,7)))].sort().reverse();el.replaceChildren(new Option("Semua periode","all"));values.forEach(v=>{const [y,m]=v.split("-");el.add(new Option(new Intl.DateTimeFormat("id-ID",{month:"long",year:"numeric"}).format(new Date(+y,+m-1,1)),v));});el.value=values.includes(old)?old:"all";}
-async function loadSources(){$("#source-list").innerHTML='<div class="empty-state">Memuat laporan Final…</div>';const {data,error}=await client.from(TABLES.reports).select("id,user_id,judul,jenis,data,isi_laporan,status,updated_at,finalized_at").eq("jenis","karo_sdm").eq("status","final").order("finalized_at",{ascending:false}).limit(500);if(error){$("#source-list").innerHTML=`<div class="empty-state">Gagal memuat sumber: ${esc(error.message)}</div>`;notify("Gagal memuat laporan sumber. Periksa RLS dan migration.",true);return;}sources=data||[];renderPeriods();renderSources();}
-async function save(statusWanted){if(saving||!canEdit())return;if(!selected.length){notify("Pilih minimal satu laporan sumber.",true);return;}saving=true;$("#save-draft").disabled=$("#finalize").disabled=true;
- const text=renderPreview(),payload={user_id:user.id,judul:$("#report-title").value.trim()||"Laporan Kompilasi KAROPSI",jenis:"karopsi",data:{jenis:"karopsi",penerima:$("#recipient").value.trim(),pembuka:$("#opening").value,penutup:$("#closing").value,sumber_kompilasi:selected.map((s,i)=>({urutan:i+1,...s.snapshot}))},isi_laporan:text,status:"draft",updated_at:new Date().toISOString(),finalized_at:null};
- try{let result;if(reportId)result=await client.from(TABLES.reports).update(payload).eq("id",reportId).eq("user_id",user.id).eq("status","draft").select("id").single();else result=await client.from(TABLES.reports).insert(payload).select("id").single();if(result.error)throw result.error;reportId=result.data.id;
-  const del=await client.from(TABLES.compilationSources).delete().eq("laporan_karopsi_id",reportId);if(del.error)throw del.error;
-  const links=selected.map((s,i)=>({laporan_karopsi_id:reportId,laporan_sumber_id:s.snapshot.source_id,urutan:i+1,snapshot_data:s.snapshot.data,snapshot_isi_laporan:s.snapshot.isi_laporan,snapshot_updated_at:s.snapshot.source_updated_at,snapshot_finalized_at:s.snapshot.source_finalized_at}));
-  const ins=await client.from(TABLES.compilationSources).insert(links);if(ins.error)throw ins.error;
-  if(statusWanted==="final"){const fin=await client.from(TABLES.reports).update({status:"final",finalized_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq("id",reportId).eq("user_id",user.id).eq("status","draft").select("id,status").single();if(fin.error)throw fin.error;status="final";$("#status-badge").textContent="FINAL";$("#status-badge").className="status-badge final";$("#editor-mode").textContent="Laporan KAROPSI Final";$("#save-message").textContent="Dokumen final terkunci. Snapshot sumber tidak berubah.";$("#save-draft").hidden=true;$("#finalize").hidden=true;}
-  else {notify("Draft kompilasi KAROPSI berhasil disimpan.");$("#save-message").textContent="Draft tersimpan. Hanya pembuat dan Admin yang dapat melihatnya.";history.replaceState(null,"",`./karopsi-builder.html?id=${encodeURIComponent(reportId)}`);}
- }catch(e){notify(`Penyimpanan kompilasi gagal: ${e.message}`,true);}finally{saving=false;$("#save-draft").disabled=false;$("#finalize").disabled=false;}}
+async function loadSources(){
+ $("#source-list").innerHTML='<div class="empty-state">Memuat laporan Final…</div>';
+ const {data,error}=await client.from(TABLES.reports).select("id,user_id,judul,jenis,data,isi_laporan,status,updated_at,finalized_at").eq("jenis","karo_sdm").eq("status","final").order("finalized_at",{ascending:false}).limit(500);
+ if(error){$("#source-list").innerHTML=`<div class="empty-state">Gagal memuat sumber: ${esc(error.message)}. Pastikan migration kompilasi sudah dijalankan dan kebijakan RLS mengizinkan pembacaan laporan Final.</div>`;notify("Gagal memuat laporan sumber. Periksa migration dan RLS.",true);return;}
+ sources=data||[];renderPeriods();renderSources();
+ if(!sources.length){
+  const {count}=await client.from(TABLES.reports).select("id",{count:"exact",head:true}).eq("jenis","karo_sdm").eq("status","draft");
+  const note=$("#source-empty-note");
+  if(note)note.textContent=count>0?`Belum ada laporan KARO SDM berstatus Final. Terdapat ${count} laporan Draft; buka arsip, periksa kelengkapan, lalu finalisasi laporan yang benar-benar sudah disetujui.`:"Belum ada laporan KARO SDM berstatus Final yang dapat dikompilasi.";
+ }
+}
+async function save(statusWanted){
+ if(saving||!canEdit())return;
+ if(!selected.length){notify("Pilih minimal satu laporan sumber.",true);return;}
+ saving=true;$("#save-draft").disabled=$("#finalize").disabled=true;
+ const text=renderPreview();
+ const payload={jenis:"karopsi",penerima:$("#recipient").value.trim(),pembuka:$("#opening").value,penutup:$("#closing").value};
+ try{
+  const {data,error}=await client.rpc("save_karopsi_compilation",{
+   p_report_id:reportId,
+   p_judul:$("#report-title").value.trim()||"Laporan Kompilasi KAROPSI",
+   p_data:payload,
+   p_isi_laporan:text,
+   p_source_ids:selected.map(s=>s.snapshot.source_id),
+   p_finalize:statusWanted==="final"
+  });
+  if(error)throw error;
+  reportId=data;status=statusWanted;
+  if(statusWanted==="final"){
+   $("#status-badge").textContent="FINAL";$("#status-badge").className="status-badge final";
+   $("#editor-mode").textContent="Laporan KAROPSI Final";
+   $("#save-message").textContent="Dokumen final terkunci. Snapshot sumber telah disimpan dan tidak berubah jika laporan sumber diperbarui.";
+   $("#save-draft").hidden=true;$("#finalize").hidden=true;
+   ["#report-title","#recipient","#opening","#closing"].forEach(sel=>$(sel).disabled=true);
+   renderSelected();notify("Laporan KAROPSI berhasil difinalisasi.");
+  }else{
+   $("#status-badge").textContent="DRAFT";$("#status-badge").className="status-badge draft";
+   $("#save-message").textContent="Draft tersimpan. Hanya pembuat dan Admin yang dapat melihatnya.";
+   history.replaceState(null,"",`./karopsi-builder.html?id=${encodeURIComponent(reportId)}`);
+   notify("Draft kompilasi KAROPSI berhasil disimpan.");
+  }
+  $("#sync-status").textContent="Tersimpan online · kompilasi KAROPSI";
+ }catch(e){notify(`Penyimpanan kompilasi gagal: ${e.message}`,true);}
+ finally{saving=false;$("#save-draft").disabled=status==="final";$("#finalize").disabled=status==="final";}
+}
 async function loadExisting(){const {data,error}=await client.from(TABLES.reports).select("id,user_id,judul,jenis,data,isi_laporan,status,finalized_at").eq("id",reportId).single();if(error)throw error;if(data.jenis!=="karopsi")throw new Error("Dokumen ini bukan laporan KAROPSI.");if(data.status==="draft"&&data.user_id!==user.id&&!admin)throw new Error("Draft hanya dapat dibuka pembuat atau Admin.");status=data.status;$("#report-title").value=data.judul||$("#report-title").value;$("#recipient").value=data.data?.penerima||$("#recipient").value;$("#opening").value=data.data?.pembuka||"";$("#closing").value=data.data?.penutup||"";
  const {data:links,error:linkError}=await client.from(TABLES.compilationSources).select("urutan,laporan_sumber_id,snapshot_data,snapshot_isi_laporan,snapshot_updated_at,snapshot_finalized_at").eq("laporan_karopsi_id",reportId).order("urutan");if(linkError)throw linkError;selected=(links||[]).map(l=>({snapshot:{source_id:l.laporan_sumber_id,judul:(l.snapshot_data?.kegiatan||[])[0]?.nama||"Laporan sumber",jenis:"karo_sdm",status:"final",data:l.snapshot_data||{},isi_laporan:l.snapshot_isi_laporan||"",source_updated_at:l.snapshot_updated_at,source_finalized_at:l.snapshot_finalized_at}}));
  if(status==="final"){$("#status-badge").textContent="FINAL";$("#status-badge").className="status-badge final";$("#editor-mode").textContent="Laporan KAROPSI Final";$("#save-message").textContent="Dokumen final terkunci.";$("#save-draft").hidden=true;$("#finalize").hidden=true;["#report-title","#recipient","#opening","#closing"].forEach(s=>$(s).disabled=true);}renderSelected();}

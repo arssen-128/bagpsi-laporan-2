@@ -59,3 +59,18 @@ Paket diperiksa untuk sintaks JS, import lokal, referensi file HTML/CSS/JS, dan 
 
 ### WAJIB sebelum deploy
 Jalankan SQL `supabase/migrations/20261126_report_status_draft_final.sql` satu kali pada Supabase SQL Editor. Migrasi menambahkan `status` dan `finalized_at`; semua record lama menjadi `draft` secara konservatif karena autosave versi lama tidak membedakan status. Migrasi tidak mengubah RLS/policies. Jangan menjalankan update massal yang menandai data lama sebagai final tanpa pemeriksaan manual.
+
+
+## Kompilasi KAROPSI (pembaruan 27 November 2026)
+- Halaman `pages/karopsi-builder.html` menggabungkan beberapa laporan KARO SDM berstatus `final` ke dalam satu laporan KAROPSI.
+- Setiap sumber disimpan sebagai snapshot pada `laporan_kompilasi_sumber`; perubahan pada laporan sumber setelah kompilasi tidak mengubah snapshot. Satu sumber boleh digunakan ulang pada kompilasi lain.
+- Simpan Draft dan Finalisasi menggunakan RPC `save_karopsi_compilation` agar penyimpanan laporan induk dan snapshot sumber berlangsung dalam satu transaksi database.
+- Laporan lama tidak otomatis diubah menjadi Final. Migrasi status sebelumnya secara konservatif menandai data lama sebagai Draft. Periksa isi laporan lama dan finalisasi satu per satu dari halaman editor sebelum menggunakannya sebagai sumber.
+
+### Urutan migrasi Supabase
+Jalankan ketiga file SQL berikut pada SQL Editor di project Supabase yang sama, sesuai urutan:
+1. `supabase/migrations/20261126_report_status_draft_final.sql`
+2. `supabase/migrations/20261127_karopsi_compilation.sql`
+3. `supabase/migrations/20261127_karopsi_compilation_atomic.sql`
+
+Jalankan setiap file satu kali. Jangan mengubah data lama menjadi Final secara massal. Jika daftar sumber tetap kosong setelah migrasi, periksa apakah memang belum ada laporan KARO SDM Final serta periksa kebijakan RLS tabel `laporan_cloud`.

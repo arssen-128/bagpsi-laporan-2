@@ -1,3 +1,9 @@
-# Update — Kompilasi KAROPSI
+# Changelog — Kompilasi KAROPSI
 
-Menambahkan halaman kompilasi KAROPSI untuk memilih beberapa laporan KARO SDM berstatus Final, mengatur urutan bagian, melihat pratinjau, menyimpan Draft, dan Finalisasi. Menambahkan tabel relasi snapshot dan RLS untuk relasi kompilasi. Tidak menghapus atau mengubah isi data laporan lama.
+## 27 November 2026 — perbaikan transaksi dan diagnosis sumber kosong
+- Penyimpanan Draft/Final kompilasi dipindahkan ke RPC database transaksional.
+- Validasi sumber dilakukan ulang di database: sumber wajib `jenis='karo_sdm'` dan `status='final'`.
+- ID sumber duplikat ditolak.
+- Snapshot data dan teks setiap sumber dibuat dalam transaksi yang sama dengan laporan induk.
+- Ditambahkan kebijakan SELECT untuk laporan KARO SDM Final agar dapat ditemukan lintas pengguna terautentikasi (tetap tunduk pada kebijakan RLS lain yang berlaku).
+- Pesan halaman menjelaskan bahwa data lama yang masih Draft harus diperiksa dan difinalisasi satu per satu; tidak ada promosi massal otomatis.
